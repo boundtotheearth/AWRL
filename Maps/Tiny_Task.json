@@ -1,0 +1,18 @@
+{
+    "terrain": [
+        ["PLN", "PLN", "PLN", "PLN", "PLN", "PLN"],
+        ["PLN", "PLN", "PLN", "PLN", "PLN", "PLN"],
+        ["PLN", "PLN", "PLN", "PLN", "PLN", "PLN"],
+        ["PLN", "PLN", "PLN", "PLN", "PLN", "PLN"],
+        ["PLN", "PLN", "PLN", "PLN", "PLN", "PLN"],
+        ["PLN", "PLN", "PLN", "PLN", "PLN", "PLN"]
+    ],
+    "units": {
+        "O": [
+            {"row": 0, "col": 0, "code": "INF"}
+        ],
+        "B": [
+            {"row": 5, "col": 5, "code": "INF"}
+        ]
+    }
+}

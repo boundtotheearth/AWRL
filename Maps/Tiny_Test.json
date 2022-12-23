@@ -1,0 +1,15 @@
+{
+    "terrain": [
+        ["OCT", "OBS", "PLN"],
+        ["BBS", "NCT", "PLN"]
+    ],
+    "units": {
+        "O": [
+            {"row": 0, "col": 0, "code": "INF"}
+        ],
+        "B": [
+            {"row": 1, "col": 1, "code": "INF"}
+        ]
+    }
+}
+
