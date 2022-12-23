@@ -276,7 +276,6 @@ class ActionAttack(Action):
             self.state.remove_unit(self.attack_target)
             if self.defending_unit.can_capture and isinstance(self.defending_terrain, Property):
                 self.defending_terrain.change_capture(self.defending_terrain.owner, 20)
-            return
 
         self.attacking_unit.available = False
 
@@ -311,7 +310,6 @@ class ActionDirectAttack(ActionAttack):
                 self.state.remove_unit(self.unit_position)
                 if self.attacking_unit.can_capture and isinstance(self.attacking_unit, Property):
                     self.attacking_unit.change_capture(self.attacking_unit.owner, 20)
-                return
 
 class ActionIndirectAttack(ActionAttack):
     def __init__(self, unit_position, attack_offset) -> None:
@@ -499,7 +497,7 @@ class ActionUnload(Action):
         terrain = state.get_terrain(self.unload_position)
         if terrain is None:
             return False, f"{self.unload_position} is not a valid unload position"
-            
+
         if terrain.get_move_cost(self.unloaded_unit.move_type) == 0:
             return False, f"{self.unloaded_unit} cannot be placed on {terrain}"
 

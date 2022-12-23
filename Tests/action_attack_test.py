@@ -98,6 +98,25 @@ def test_cannot_attack_after_combine(generate_test_game):
     with pytest.raises(Exception):
         game.execute_action(attack_action)
 
+# Cannot attack after attacking
+def test_cannot_attack_after_attacking(generate_test_game):
+    units = {
+        (0, 0): ("INF", "O"), 
+        (0, 1): ("INF", "B")
+    }
+    
+    terrain = [["PLN", "PLN"]]
+    
+    game = generate_test_game(terrain=terrain, units=units)
+
+    attack_action = ActionAttack(ActionMove(unit_position=(0, 0), offset=(0, 0)), attack_offset=(0, 1))
+    game.execute_action(attack_action)
+
+    attack_action_2 = ActionAttack(ActionMove(unit_position=(0, 0), offset=(0, 0)), attack_offset=(0, 1))
+    with pytest.raises(Exception):
+        game.execute_action(attack_action_2)
+
+
 # Attack consumes ammo
 def test_attack_consumes_ammo(generate_test_game, unit_library):
     test_unit = unit_library.create("TNK", 'O')

@@ -72,9 +72,9 @@ observation = env.reset()
 env.render(mode='text')
 
 # model = MaskablePPO.load("ppo_simple/best_model")
-# model = PPO.load("ppo_simple/ppo_land_6x6")
-test_agent = RandomAgent()
-# test_agent = AIAgent(model)
+model = MaskablePPO.load("ppo_simple_build")
+# test_agent = RandomAgent()
+test_agent = AIAgent(model)
 
 while True:
     action_masks = get_action_masks(env)
@@ -82,7 +82,7 @@ while True:
     # observation = observation[0]
     action = test_agent.get_action(observation, action_masks[0])
 
-    observation, reward, done, info = env.step([action])
+    observation, reward, done, info = env.step(action)
 
     if done[0]:
         print("Done", reward)
