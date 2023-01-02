@@ -1,4 +1,5 @@
 import argparse
+import os
 
 from Game.Game import Game
 from Game.CO import BaseCO
@@ -18,6 +19,9 @@ parser = argparse.ArgumentParser(
     description="AWRL Training Script using Stable Baselines3"
 )
 
+parser.add_argument("--map-name", type=str, default=None)
+parser.add_argument("--from-checkpoint", type=str, default=None)
+parser.add_argument("--load-opponents", type=str, default=None)
 parser.add_argument("--total-timesteps", type=int, default=100000)
 parser.add_argument("--n-steps", type=int, default=128)
 parser.add_argument("--batch-size", type=int, default=64)
@@ -42,7 +46,7 @@ def game_generator():
         'B': BaseCO()
     }
     game = Game.load_map(
-        map_path="Maps/Tiny_Task.json",
+        map_path=args.map_name,
         players_co=cos,
         save_history=False
     )
@@ -51,6 +55,12 @@ def game_generator():
 agent = AIAgent(None)
 
 current_opponents = [RandomAgent()]
+if args.load_opponents:
+    print("Loading opponents...")
+    opponent_models = [f for f in os.listdir(args.load_opponents) if os.path.isfile(os.path.join(args.load_opponents, f)) and ".zip" in f]
+    opponents = [MaskablePPO.load(model) for model in opponent_models]
+    current_opponents.extend(opponents)
+    print(f"Loaded {len(opponents)} opponents: {opponents}")
 
 env_config = {
     "game_generator": game_generator,
@@ -84,21 +94,27 @@ policy_kwargs = dict(
     features_extractor_class=CustomFeatureExtractor,
     features_extractor_kwargs=dict(features_dim=128),
 )
-model = MaskablePPO(
-    policy='MultiInputPolicy', 
-    env=env, 
-    verbose=1, 
-    n_steps=args.n_steps, 
-    batch_size=args.batch_size,
-    learning_rate=args.lr,
-    n_epochs=args.n_epochs,
-    policy_kwargs=policy_kwargs
-)
+
+if args.from_checkpoint:
+    print("Loading from checkpoing")
+    model = MaskablePPO.load(args.from_checkpoint)
+else:
+    print("Train from scratch")
+    model = MaskablePPO(
+        policy='MultiInputPolicy', 
+        env=env, 
+        verbose=1, 
+        n_steps=args.n_steps, 
+        batch_size=args.batch_size,
+        learning_rate=args.lr,
+        n_epochs=args.n_epochs,
+        policy_kwargs=policy_kwargs
+    )
 
 agent.model = model
 
 obs = env.reset()
 model.learn(total_timesteps=args.total_timesteps, callback=selfplay_eval_callback, progress_bar=True)
 
-model.save(f"ppo_simple/custom_model_test")
-print("TRAINING DONE")
+model.save(os.path.join(args.save_path, "final_model"))
+print("TRAINING DONE. Final model saved to ")
