@@ -11,20 +11,29 @@ class Agent:
 class DoNothingAgent(Agent):
     def get_action(self, observation, action_masks):
         return ActionEnd()
+    def __str__(self) -> str:
+        return "Do Nothing Agent"
 
 class RandomAgent(Agent):
     def get_action(self, observation, action_masks):
         action = np.random.choice(np.where(action_masks)[0])
         return action
+    
+    def __str__(self) -> str:
+        return "RandomAgent"
         
 class AIAgent(Agent):
-    def __init__(self, model):
+    def __init__(self, model, name="AIAgent"):
         super().__init__()
         self.model = model
+        self.name = name
 
     def get_action(self, observation, action_masks):
         action, _state = self.model.predict(observation, action_masks=action_masks)
         return action.tolist()
+
+    def __str__(self) -> str:
+        return self.name
 
 class HumanAgent(Agent):
     def __init__(self):
@@ -39,6 +48,9 @@ class HumanAgent(Agent):
                 return action
             else:
                 print("Invalid Action")
+    
+    def __str__(self) -> str:
+        return "HumanAgent"
 
 class FileAgent(Agent):
     def __init__(self, file):

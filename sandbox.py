@@ -4,6 +4,8 @@ from Agent import HumanAgent, DoNothingAgent, AIAgent, RandomAgent
 from AWEnv_Gym import AWEnv_Gym
 from Game.Unit import UnitLibrary, standard_units
 from Game.Terrain import TerrainLibrary, standard_terrain
+from SelfplayCallback import SelfplayCallback
+from util import linear_schedule
 
 from stable_baselines3.ppo.ppo import PPO
 from stable_baselines3.common.env_checker import check_env
@@ -67,20 +69,17 @@ def game_generator():
 
     return game
 
-def linear_schedule(initial_value: float):
-    def func(progress_remaining: float) -> float:
-        return progress_remaining * initial_value
-    return func
-
 agent = AIAgent(None)
+
+current_opponents = [RandomAgent()]
 
 env_config = {
     "game_generator": game_generator,
     "max_episode_steps": 4000,
     "render_mode": None,
     "seed": None,
-    'agent_player': 'O',
-    'opponents': {'B': RandomAgent()}
+    'agent_player': 'random',
+    'opponent_list': current_opponents
 }
 env = make_vec_env(AWEnv_Gym.selfplay_env, n_envs=20, env_kwargs={'env_config': env_config})
 
@@ -89,12 +88,13 @@ eval_env_config = {
     "max_episode_steps": 2000,
     "render_mode": None,
     "seed": None,
-    'agent_player': 'O',
-    'opponents': {'B': RandomAgent()}
+    'agent_player': 'random',
+    'opponent_list': current_opponents
 }
 eval_env = make_vec_env(AWEnv_Gym.selfplay_env, n_envs=20, env_kwargs={'env_config': eval_env_config})
-eval_callback = MaskableEvalCallback(eval_env=eval_env, n_eval_episodes=200, best_model_save_path="ppo_simple", eval_freq=512)
+# eval_callback = MaskableEvalCallback(eval_env=eval_env, n_eval_episodes=200, best_model_save_path="ppo_simple", eval_freq=512)
 # eval_callback = EvalCallback(eval_env=eval_env, n_eval_episodes=200, best_model_save_path="ppo_simple", eval_freq=512)
+selfplay_eval_callback = SelfplayCallback(eval_env=eval_env, n_eval_episodes=200, best_model_save_path="ppo_simple", eval_freq=512, reward_threshold=0.9, selfplay_opponents=current_opponents)
 
 # model = MaskablePPO("MlpPolicy", env, verbose=1, n_steps=512, learning_rate=2.5e-4)
 # model = MaskablePPO.load("ppo_simple/ppo_land_6x6", env, learning_rate=2.5e-4)
@@ -108,7 +108,7 @@ model = MaskablePPO('MultiInputPolicy', env, verbose=1, n_steps=128, learning_ra
 agent.model = model
 
 obs = env.reset()
-model.learn(total_timesteps=100000, callback=eval_callback, progress_bar=True)
+model.learn(total_timesteps=100000, callback=selfplay_eval_callback, progress_bar=True)
 
 model.save(f"ppo_simple/custom_model_test")
 print("TRAINING DONE")

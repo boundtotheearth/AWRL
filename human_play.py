@@ -62,8 +62,8 @@ env_config = {
     "max_episode_steps": 1000,
     "render_mode": 'text',
     "seed": None,
-    "agent_player": "O",
-    "opponents": {"B": HumanAgent()}
+    "agent_player": "random",
+    "opponent_list": [HumanAgent(), RandomAgent()]
 }
 
 env = make_vec_env(AWEnv_Gym.selfplay_env, n_envs=1, env_kwargs={'env_config': env_config})
@@ -72,9 +72,9 @@ observation = env.reset()
 env.render(mode='text')
 
 # model = MaskablePPO.load("ppo_simple/best_model")
-model = MaskablePPO.load("ppo_simple_build")
-# test_agent = RandomAgent()
-test_agent = AIAgent(model)
+# model = MaskablePPO.load("ppo_simple_build")
+test_agent = RandomAgent()
+# test_agent = AIAgent(model)
 
 while True:
     action_masks = get_action_masks(env)
@@ -82,7 +82,7 @@ while True:
     # observation = observation[0]
     action = test_agent.get_action(observation, action_masks[0])
 
-    observation, reward, done, info = env.step(action)
+    observation, reward, done, info = env.step([action])
 
     if done[0]:
         print("Done", reward)

@@ -47,7 +47,7 @@ class AWEnv_Gym(Env):
                 SelfplayWrapper(
                     cls(env_config),
                     agent_player=env_config.get("agent_player"),
-                    opponents=env_config.get("opponents")
+                    opponent_list=env_config.get("opponent_list")
                 ),
                 max_episode_steps=env_config.get("max_episode_steps")
             )
