@@ -10,7 +10,7 @@ export PATH="/home/f/farnah/miniconda3/bin:$PATH"
 source activate AWRL_env
 #conda activate AWRL_env
 
-python train.py --total-timesteps=100000 \
+python train.py --total-timesteps=200000 \
 --from_checkpoint="ppo_simple/custom_model_test" \
 --map-name="Maps/simple_build.json" \
 --n-steps=512 \
