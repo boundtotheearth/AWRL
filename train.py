@@ -96,8 +96,8 @@ policy_kwargs = dict(
 )
 
 if args.from_checkpoint:
-    print("Loading from checkpoing")
-    model = MaskablePPO.load(args.from_checkpoint)
+    print("Loading from checkpoint")
+    model = MaskablePPO.load(args.from_checkpoint, env=env)
 else:
     print("Train from scratch")
     model = MaskablePPO(
