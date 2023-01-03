@@ -55,7 +55,7 @@ def game_generator():
 current_opponents = [RandomAgent()]
 if args.load_opponents:
     print("Loading opponents...")
-    opponent_models = [f.replace(".zip", "") for f in os.listdir(args.load_opponents) if os.path.isfile(os.path.join(args.load_opponents, f)) and ".zip" in f]
+    opponent_models = [os.path.join(args.load_opponents, f).replace(".zip", "") for f in os.listdir(args.load_opponents) if os.path.isfile(os.path.join(args.load_opponents, f)) and ".zip" in f]
     opponents = [MaskablePPO.load(model) for model in opponent_models]
     current_opponents.extend(opponents)
     print(f"Loaded {len(opponents)} opponents: {opponents}")
