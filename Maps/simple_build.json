@@ -2,8 +2,8 @@
     "terrain": [
         ["OBS", "OCT", "PLN", "PLN", "PLN", "PLN"],
         ["OCT", "OCT", "PLN", "PLN", "PLN", "PLN"],
-        ["PLN", "PLN", "PLN", "PLN", "PLN", "PLN"],
-        ["PLN", "PLN", "PLN", "PLN", "PLN", "PLN"],
+        ["PLN", "PLN", "WOD", "WOD", "PLN", "PLN"],
+        ["PLN", "PLN", "WOD", "WOD", "PLN", "PLN"],
         ["PLN", "PLN", "PLN", "PLN", "BCT", "BCT"],
         ["PLN", "PLN", "PLN", "PLN", "BCT", "BBS"]
     ],

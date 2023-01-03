@@ -280,7 +280,7 @@ class ActionAttack(Action):
         self.attacking_unit.available = False
 
     def __str__(self) -> str:
-        return f"{super().__str__()} then attack unit at {self.attack_target}"
+        return f"{str(self.move_action)} then attack unit at {self.attack_target}"
 
 class ActionDirectAttack(ActionAttack):
     def validate(self, state):
@@ -367,7 +367,7 @@ class ActionCapture(Action):
         self.capturing_unit.available = False
 
     def __str__(self) -> str:
-        return f"{super().__str__()} then capture"
+        return f"{str(self.move_action)} then capture"
 
 class ActionBuild(Action):
     def __init__(self, property_position, unit_code) -> None:
@@ -455,7 +455,7 @@ class ActionRepair(Action):
         self.repairing_unit.available = False
 
     def __str__(self) -> str:
-        return f"{super().__str__()} then repairs unit at {self.repair_target}"
+        return f"{str(self.move_action)} then repairs unit at {self.repair_target}"
 
 class ActionUnload(Action):
     def __init__(self, move_action, unload_offset, idx) -> None:
@@ -520,7 +520,7 @@ class ActionUnload(Action):
         self.unloading_unit.available = False
 
     def __str__(self) -> str:
-        return f"{super().__str__()} then unloads {self.idx} at {self.unload_position}"
+        return f"{str(self.move_action)} then unloads {self.idx} at {self.unload_position}"
 
 class ActionCOP(Action):
     pass

@@ -58,7 +58,7 @@ if args.load_opponents:
     opponent_models = [os.path.join(args.load_opponents, f).replace(".zip", "") for f in os.listdir(args.load_opponents) if os.path.isfile(os.path.join(args.load_opponents, f)) and ".zip" in f]
     opponents = [AIAgent(MaskablePPO.load(model)) for model in opponent_models]
     current_opponents.extend(opponents)
-    print(f"Loaded {len(opponents)} opponents: {opponents}")
+    print(f"Loaded {len(opponents)} opponents: {opponent_models}")
 
 env_config = {
     "game_generator": game_generator,
