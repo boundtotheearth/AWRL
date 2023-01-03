@@ -52,12 +52,10 @@ def game_generator():
     )
     return game
 
-agent = AIAgent(None)
-
 current_opponents = [RandomAgent()]
 if args.load_opponents:
     print("Loading opponents...")
-    opponent_models = [f for f in os.listdir(args.load_opponents) if os.path.isfile(os.path.join(args.load_opponents, f)) and ".zip" in f]
+    opponent_models = [f.replace(".zip", "") for f in os.listdir(args.load_opponents) if os.path.isfile(os.path.join(args.load_opponents, f)) and ".zip" in f]
     opponents = [MaskablePPO.load(model) for model in opponent_models]
     current_opponents.extend(opponents)
     print(f"Loaded {len(opponents)} opponents: {opponents}")
@@ -111,10 +109,9 @@ else:
         policy_kwargs=policy_kwargs
     )
 
-agent.model = model
-
 obs = env.reset()
 model.learn(total_timesteps=args.total_timesteps, callback=selfplay_eval_callback, progress_bar=True)
 
-model.save(os.path.join(args.save_path, "final_model"))
-print("TRAINING DONE. Final model saved to ")
+final_save_path = os.path.join(args.save_path, "final_model")
+model.save(final_save_path)
+print(f"TRAINING DONE. Final model saved to {final_save_path}")

@@ -1,7 +1,7 @@
 #!/bin/bash
-
+  
 #SBATCH --job-name=testtrain
-#SBATCH --gpus=titan:1
+#SBATCH --gpus=a100:1
 #SBATCH --partition=medium
 #SBATCH --time=03:00:00
 
@@ -11,7 +11,8 @@ source activate AWRL_env
 #conda activate AWRL_env
 
 python train.py --total-timesteps=200000 \
---from_checkpoint="ppo_simple/custom_model_test" \
+--from-checkpoint="ppo_simple/final_model" \
+--load-opponents="opponents" \
 --map-name="Maps/simple_build.json" \
 --n-steps=512 \
 --batch-size=64 \
