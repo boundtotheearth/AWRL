@@ -21,7 +21,7 @@ def game_generator():
     }
 
     game = Game.load_map(
-        map_path="Maps/medium_build.json",
+        map_path="Maps/Mind_Trap.json",
         players_co=cos,
         save_history=False
     )
@@ -30,7 +30,7 @@ def game_generator():
 
 env_config = {
     "game_generator": game_generator,
-    "max_episode_steps": 4000,
+    "max_episode_steps": 10000,
     "render_mode": 'text',
     "seed": None,
     "agent_player": "random",
