@@ -1,0 +1,20 @@
+{
+    "terrain": [
+        ["WOD", "PLN", "WOD", "ROD", "PLN", "PLN", "NCT", "PLN", "MTN", "WOD"],
+        ["NCT", "PLN", "ROD", "ROD", "ROD", "ROD", "ROD", "BBS", "BHQ", "NAP"],
+        ["MTN", "ROD", "ROD", "MTN", "PLN", "WOD", "MTN", "PLN", "BBS", "PLN"],
+        ["ROD", "ROD", "MTN", "NCT", "ROD", "ROD", "ROD", "MTN", "ROD", "NCT"],
+        ["WOD", "ROD", "PLN", "ROD", "PLN", "PLN", "ROD", "NCT", "ROD", "PLN"],
+        ["PLN", "ROD", "NCT", "ROD", "PLN", "PLN", "ROD", "PLN", "ROD", "PLN"],
+        ["NCT", "ROD", "MTN", "ROD", "ROD", "ROD", "NCT", "MTN", "ROD", "ROD"],
+        ["PLN", "OBS", "PLN", "MTN", "WOD", "PLN", "MTN", "ROD", "ROD", "MTN"],
+        ["NAP", "OHQ", "OBS", "ROD", "ROD", "ROD", "ROD", "ROD", "PLN", "NCT"],
+        ["WOD", "MTN", "PLN", "NCT", "PLN", "PLN", "ROD", "WOD", "PLN", "WOD"]
+    ],
+    "units": {
+        "O": [],
+        "B": [
+            {"row": 1, "col": 7, "code": "INF"}
+        ]
+    }
+}
