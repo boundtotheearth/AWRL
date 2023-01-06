@@ -14,7 +14,7 @@ class Unit:
         self.fuel = self.max_fuel
         self.daily_fuel = 0 
         self.vision = 0
-        self.range = 0
+        self.range = []
         self.move_type = MoveType.FOOT
         self.cost = 0
         self.load_capacity = 0
@@ -371,7 +371,7 @@ class UnitBattleCopter(Unit):
         self.max_fuel = 99
         self.daily_fuel = 2
         self.vision = 3
-        self.range = 1
+        self.range = [1]
         self.move_type = MoveType.AIR
         self.cost = 9000
         self.attack_table = {

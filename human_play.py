@@ -43,7 +43,7 @@ print(env.get_attr('opponents'))
 
 env.render(mode='text')
 
-model = MaskablePPO.load("ppo_simple/final_model")
+model = MaskablePPO.load("Models/simple_build/best_model")
 # model = MaskablePPO.load("ppo_simple_build")
 # test_agent = RandomAgent()
 test_agent = AIAgent(model)
