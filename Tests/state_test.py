@@ -234,7 +234,6 @@ def test_get_property_at_position_no_owner(generate_test_game):
     ]
 
     game = generate_test_game(terrain=terrain)
-    print(game.state.terrain)
 
     for r in range(len(terrain)):
         for c in range(len(terrain[0])):
@@ -335,7 +334,7 @@ def test_temp(generate_test_game):
     units = {(5, 14): ("INF", "O")}
     game = generate_test_game(terrain=terrain, units=units)
     path = game.state.get_shortest_path((5, 14), (7, 14), game.state.get_unit((5, 14)))
-    print(path)
+
     assert path == [89, 104, 119]
     
 # TODO: Test movement cost updating

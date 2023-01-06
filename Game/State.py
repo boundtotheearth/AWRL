@@ -163,7 +163,7 @@ class State:
                 occupancy_grid[:,position[0] * self.map_width + position[1]] = 100
             else:
                 available_move_types.add(unit.move_type)
-        print(available_move_types)
+
         for move_type in available_move_types:
             graph = occupancy_grid + self._terrain_movement_costs[move_type]
             self._movement_costs[move_type] = shortest_path(graph)
@@ -176,18 +176,14 @@ class State:
         end_id = end[0] * self.map_width + end[1]
 
         current_player = self.get_current_player()
-        available_move_types = set()
             
         occupancy_grid = np.full((self.map_height * self.map_width, self.map_height * self.map_width), 0)
-        for position, unit in self.get_all_units().items():
-            if unit.owner != current_player:
+        for position, other_unit in self.get_all_units().items():
+            if other_unit.owner != current_player:
                 occupancy_grid[:,position[0] * self.map_width + position[1]] = 100
-            else:
-                available_move_types.add(unit.move_type)
         
-        for move_type in available_move_types:
-            graph = occupancy_grid + self._terrain_movement_costs[move_type]
-            movement_costs, predecessors = shortest_path(graph, indices=start_id, return_predecessors=True)
+        graph = occupancy_grid + self._terrain_movement_costs[unit.move_type]
+        movement_costs, predecessors = shortest_path(graph, indices=start_id, return_predecessors=True)
 
         path = []
         cur = end_id

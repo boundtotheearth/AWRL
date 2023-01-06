@@ -37,8 +37,6 @@ class Unit:
             self.fuel = self.max_fuel
         else:
             if fuel < 0 or fuel > self.max_fuel:
-                print(fuel)
-                print(type(self))
                 raise Exception("Provided fuel invalid")
             self.fuel = fuel
 
