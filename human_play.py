@@ -21,7 +21,7 @@ def game_generator():
     }
 
     game = Game.load_map(
-        map_path="Maps/Mind_Trap.json",
+        map_path="Maps/simple_build.json",
         players_co=cos,
         save_history=False
     )
@@ -34,7 +34,7 @@ env_config = {
     "render_mode": 'text',
     "seed": None,
     "agent_player": "random",
-    "opponent_list": [RandomAgent()]
+    "opponent_list": [AIAgent(MaskablePPO.load("ppo_simple/model_1"))]
 }
 
 env = make_vec_env(AWEnv_Gym.selfplay_env, n_envs=1, env_kwargs={'env_config': env_config})
@@ -43,10 +43,10 @@ print(env.get_attr('opponents'))
 
 env.render(mode='text')
 
-# model = MaskablePPO.load("ppo_simple/final_model")
+model = MaskablePPO.load("ppo_simple/final_model")
 # model = MaskablePPO.load("ppo_simple_build")
-test_agent = RandomAgent()
-# test_agent = AIAgent(model)
+# test_agent = RandomAgent()
+test_agent = AIAgent(model)
 
 while True:
     action_masks = get_action_masks(env)
@@ -55,7 +55,7 @@ while True:
     action = test_agent.get_action(observation, action_masks[0])
     print(action)
 
-    observation, reward, done, info = env.step([action])
+    observation, reward, done, info = env.step(action)
 
     if done[0]:
         print("Done", reward)

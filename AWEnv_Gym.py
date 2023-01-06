@@ -105,69 +105,69 @@ class AWEnv_Gym(Env):
 
         self.update_valid_actions()
 
-    def create_action(self, action_id):
-        # Extract action type and arguments from action index based on the shapes of actions spaces
-        action_start_id = 0
-        for action_type, action_shape in self.actions.items():
-            action_count = math.prod(action_shape)
-            action_end_id = action_start_id + action_count
-            if action_id >= action_start_id and action_id < action_end_id:
-                action_args = action_id - action_start_id
-                action = action_type
-                break
+    # def create_action(self, action_id):
+    #     # Extract action type and arguments from action index based on the shapes of actions spaces
+    #     action_start_id = 0
+    #     for action_type, action_shape in self.actions.items():
+    #         action_count = math.prod(action_shape)
+    #         action_end_id = action_start_id + action_count
+    #         if action_id >= action_start_id and action_id < action_end_id:
+    #             action_args = action_id - action_start_id
+    #             action = action_type
+    #             break
                 
-            action_start_id = action_end_id
+    #         action_start_id = action_end_id
 
-        # Construct Action object from type and arguments
-        if action is ActionMoveCombineLoad:
-            source_r, source_c, offset_id_r, offset_id_c = np.unravel_index(action_args, self.actions[action])
-            action_source = (source_r, source_c)
-            action_offset = (offset_id_r - self.max_move, offset_id_c - self.max_move)
+    #     # Construct Action object from type and arguments
+    #     if action is ActionMoveCombineLoad:
+    #         source_r, source_c, offset_id_r, offset_id_c = np.unravel_index(action_args, self.actions[action])
+    #         action_source = (source_r, source_c)
+    #         action_offset = (offset_id_r - self.max_move, offset_id_c - self.max_move)
 
-            action = ActionMoveCombineLoad(action_source, action_offset)
-        elif action is ActionDirectAttack:
-            source_r, source_c, move_offset_r, move_offset_c, attack_direction = np.unravel_index(action_args, self.actions[action])
-            source = (source_r, source_c)
-            move_offset = (move_offset_r - self.max_move, move_offset_c - self.max_move)
-            attack_offset = parse_direction(attack_direction)
+    #         action = ActionMoveCombineLoad(action_source, action_offset)
+    #     elif action is ActionDirectAttack:
+    #         source_r, source_c, move_offset_r, move_offset_c, attack_direction = np.unravel_index(action_args, self.actions[action])
+    #         source = (source_r, source_c)
+    #         move_offset = (move_offset_r - self.max_move, move_offset_c - self.max_move)
+    #         attack_offset = parse_direction(attack_direction)
 
-            action = ActionDirectAttack(source, move_offset, attack_offset)
-        elif action is ActionIndirectAttack:
-            source_r, source_c, attack_offset_id_r, attack_offset_id_c = np.unravel_index(action_args, self.actions[action])
-            source = (source_r, source_c)
-            attack_offset = (attack_offset_id_r - self.max_attack, attack_offset_id_c - self.max_attack)
+    #         action = ActionDirectAttack(source, move_offset, attack_offset)
+    #     elif action is ActionIndirectAttack:
+    #         source_r, source_c, attack_offset_id_r, attack_offset_id_c = np.unravel_index(action_args, self.actions[action])
+    #         source = (source_r, source_c)
+    #         attack_offset = (attack_offset_id_r - self.max_attack, attack_offset_id_c - self.max_attack)
 
-            action = ActionIndirectAttack(source, attack_offset)
-        elif action is ActionCapture:
-            source_r, source_c, offset_r, offset_c = np.unravel_index(action_args, self.actions[action])
-            source = (source_r, source_c)
-            offset = (offset_r - self.max_move, offset_c - self.max_move)
+    #         action = ActionIndirectAttack(source, attack_offset)
+    #     elif action is ActionCapture:
+    #         source_r, source_c, offset_r, offset_c = np.unravel_index(action_args, self.actions[action])
+    #         source = (source_r, source_c)
+    #         offset = (offset_r - self.max_move, offset_c - self.max_move)
 
-            action = ActionCapture(source, offset)
-        elif action is ActionBuild:
-            source_r, source_c, unit_idx = np.unravel_index(action_args, self.actions[action])
-            source = (source_r, source_c)
-            unit_code = self.unit_list[unit_idx].code
+    #         action = ActionCapture(source, offset)
+    #     elif action is ActionBuild:
+    #         source_r, source_c, unit_idx = np.unravel_index(action_args, self.actions[action])
+    #         source = (source_r, source_c)
+    #         unit_code = self.unit_list[unit_idx].code
 
-            action = ActionBuild(source, unit_code)
-        elif action is ActionRepair:
-            source_r, source_c, move_offset_r, move_offset_c, repair_direction = np.unravel_index(action_args, self.actions[action])
-            source = (source_r, source_c)
-            move_offset = (move_offset_r - self.max_move, move_offset_c - self.max_move)
-            repair_offset = parse_direction(repair_direction)
+    #         action = ActionBuild(source, unit_code)
+    #     elif action is ActionRepair:
+    #         source_r, source_c, move_offset_r, move_offset_c, repair_direction = np.unravel_index(action_args, self.actions[action])
+    #         source = (source_r, source_c)
+    #         move_offset = (move_offset_r - self.max_move, move_offset_c - self.max_move)
+    #         repair_offset = parse_direction(repair_direction)
 
-            action = ActionRepair(source, move_offset, repair_offset)
-        elif action is ActionUnload:
-            source_r, source_c, move_offset_r, move_offset_c, unload_direction, unit_idx = np.unravel_index(action_args, self.actions[action])
-            source = (source_r, source_c)
-            move_offset = (move_offset_r - self.max_move, move_offset_c - self.max_move)
-            unload_offset = parse_direction(unload_direction)
+    #         action = ActionRepair(source, move_offset, repair_offset)
+    #     elif action is ActionUnload:
+    #         source_r, source_c, move_offset_r, move_offset_c, unload_direction, unit_idx = np.unravel_index(action_args, self.actions[action])
+    #         source = (source_r, source_c)
+    #         move_offset = (move_offset_r - self.max_move, move_offset_c - self.max_move)
+    #         unload_offset = parse_direction(unload_direction)
 
-            action = ActionUnload(source, move_offset, unload_offset, unit_idx)
-        else:
-            action = ActionEnd()
+    #         action = ActionUnload(source, move_offset, unload_offset, unit_idx)
+    #     else:
+    #         action = ActionEnd()
 
-        return action
+    #     return action
 
     def step(self, action):
         if not isinstance(action, Action):

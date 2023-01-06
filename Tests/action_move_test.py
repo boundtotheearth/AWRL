@@ -99,7 +99,7 @@ def test_move_limited_by_terrain_movement_costs(generate_test_game, terrain_libr
     wood_terrain = terrain_library.create("WOD")
     road_terrain_2 = terrain_library.create("ROD")
     
-    units = {(0, 0): ("REC", "O")}
+    units = {(0, 0): ("INF", "O")}
     
     terrain = [[road_terrain, road_terrain_2, mountain_terrain, wood_terrain]]
     
@@ -107,7 +107,7 @@ def test_move_limited_by_terrain_movement_costs(generate_test_game, terrain_libr
     
     move_action = ActionMoveCombineLoad(ActionMove(unit_position=(0, 0), offset=(0, 3)))
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception) as e:
         game.execute_action(move_action)
 
 # Can combine with same type unit with missing health

@@ -1,3 +1,6 @@
+bot.py
+bot.config
+
 # Models
 Models/
 ppo_simple/

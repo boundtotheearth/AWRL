@@ -302,6 +302,44 @@ def test_set_terrain_at_position(generate_test_game):
         for c in range(len(new_terrain[0])):
             assert game.state.get_terrain((r, c)) == new_terrain[r][c]
 
+# Gets the correct shortest path
+def test_get_shortest_path(generate_test_game):
+    terrain = [
+        ["ROD", "MTN"],
+        ["ROD", "MTN"],
+        ["ROD", "ROD"],
+    ]
+    units = {(0, 1): ("INF", "O")}
+    game = generate_test_game(terrain=terrain, units=units)
+    path = game.state.get_shortest_path((0, 1), (2, 1), game.state.get_unit((0, 1)))
+    assert path == [1, 3, 5]
+
+def test_temp(generate_test_game):
+    terrain = [
+        ["SEA", "SHL", "SHL", "PLN", "MTN", "WOD", "MTN", "MTN", "MTN", "SEA", "SEA", "NCT", "WOD", "SHL", "SEA"],
+        ["SHL", "PLN", "WOD", "PLN", "PLN", "WOD", "WOD", "MTN", "NCT", "SHL", "SEA", "SEA", "BBS", "BHQ", "SHL"],
+        ["WOD", "ROD", "ROD", "ROD", "ROD", "ROD", "ROD", "MTN", "PLN", "WOD", "SEA", "SEA", "PLN", "ROD", "BBS"],
+        ["PLN", "ROD", "NCT", "PLN", "WOD", "PLN", "ROD", "ROD", "ROD", "ROD", "ROD", "ROD", "WOD", "ROD", "NCT"],
+        ["PLN", "ROD", "PLN", "PLN", "PLN", "NCT", "ROD", "MTN", "NCT", "PLN", "SEA", "SEA", "PLN", "ROD", "WOD"],
+        ["RVR", "ROD", "RVR", "RVR", "PLN", "ROD", "ROD", "WOD", "PLN", "PLN", "MTN", "RVR", "PLN", "ROD", "MTN"],
+        ["WOD", "ROD", "NCT", "RVR", "PLN", "ROD", "NCT", "PLN", "WOD", "PLN", "MTN", "RVR", "NCT", "ROD", "MTN"],
+        ["PLN", "ROD", "NBS", "RVR", "WOD", "ROD", "ROD", "ROD", "ROD", "ROD", "WOD", "RVR", "NBS", "ROD", "PLN"],
+        ["MTN", "ROD", "NCT", "RVR", "MTN", "PLN", "WOD", "PLN", "NCT", "ROD", "PLN", "RVR", "NCT", "ROD", "WOD"],
+        ["MTN", "ROD", "PLN", "RVR", "MTN", "PLN", "PLN", "WOD", "ROD", "ROD", "PLN", "RVR", "RVR", "ROD", "RVR"],
+        ["WOD", "ROD", "PLN", "SEA", "SEA", "PLN", "NCT", "MTN", "ROD", "NCT", "PLN", "PLN", "PLN", "ROD", "PLN"],
+        ["NCT", "ROD", "WOD", "ROD", "ROD", "ROD", "ROD", "ROD", "ROD", "PLN", "WOD", "PLN", "NCT", "ROD", "PLN"],
+        ["OBS", "ROD", "PLN", "SEA", "SEA", "WOD", "PLN", "MTN", "ROD", "ROD", "ROD", "ROD", "ROD", "ROD", "WOD"],
+        ["SHL", "OHQ", "OBS", "SEA", "SEA", "SHL", "NCT", "MTN", "WOD", "WOD", "PLN", "PLN", "WOD", "PLN", "SHL"],
+        ["SEA", "SHL", "WOD", "NCT", "SEA", "SEA", "MTN", "MTN", "MTN", "WOD", "MTN", "PLN", "SHL", "SHL", "SEA"]
+    ]
+    units = {(5, 14): ("INF", "O")}
+    game = generate_test_game(terrain=terrain, units=units)
+    path = game.state.get_shortest_path((5, 14), (7, 14), game.state.get_unit((5, 14)))
+    print(path)
+    assert path == [89, 104, 119]
+    
+# TODO: Test movement cost updating
+
 # TODO: Can check if there is a winner
 
 # TODO: Can display state as text

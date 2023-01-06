@@ -37,6 +37,8 @@ class Unit:
             self.fuel = self.max_fuel
         else:
             if fuel < 0 or fuel > self.max_fuel:
+                print(fuel)
+                print(type(self))
                 raise Exception("Provided fuel invalid")
             self.fuel = fuel
 
@@ -224,7 +226,7 @@ class UnitAPC(Unit):
         super().__init__(owner)
         self.move = 6
         self.max_ammo = 0
-        self.max_fuel = 60
+        self.max_fuel = 70
         self.daily_fuel = 0
         self.vision = 1
         self.range = [0]

@@ -12,7 +12,7 @@ source activate AWRL_env
 
 python train.py --total-timesteps=200000 \
 --map-name="Maps/Mind_Trap.json" \
---n-steps=1024 \
---batch-size=128 \
---max-steps=10000 \
---max-eval-steps=10000 \
+--n-steps=512 \
+--batch-size=64 \
+--max-steps=1000 \
+--max-eval-steps=1000 \
