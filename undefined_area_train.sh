@@ -1,7 +1,7 @@
 #!/bin/bash
   
 #SBATCH --job-name=testtrain
-#SBATCH --gpus=titan:1
+#SBATCH --gpus=a100:1
 #SBATCH --partition=long
 #SBATCH --time=07:00:00
 
@@ -12,8 +12,10 @@ source activate AWRL_env
 
 python train.py --total-timesteps=100000 \
 --map-name="Maps/Undefined_Area.json" \
---n-steps=1024 \
---batch-size=1024 \
---max-steps=2000 \
---max-eval-steps=2000 \
---n-eval-episodes=50
+--n-steps=128 \
+--batch-size=512 \
+--max-steps=10000 \
+--max-eval-steps=10000 \
+--n-eval-episodes=60 \
+--n-envs=30 \
+--n-eval-envs=30

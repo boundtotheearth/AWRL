@@ -10,6 +10,8 @@ import numpy as np
 import math
 from collections import OrderedDict
 
+from Game.Game import Game
+from Game.CO import BaseCO
 from Game.Action import Action, ActionEnd, ActionMove, ActionMoveCombineLoad, ActionDirectAttack, ActionIndirectAttack, ActionCapture, ActionBuild, ActionRepair, ActionUnload
 from Agent import Agent
 from util import parse_direction, parse_direction_reverse
@@ -57,8 +59,8 @@ class AWEnv_Gym(Env):
 
         self.env_config = env_config
 
-        self.generate_game = env_config.get('game_generator')
-        self.game = self.generate_game()
+        self.map = env_config.get('map')
+        self.game = self.generate_game(self.map)
         self.seed(env_config.get('seed', 0))
 
         self.player_list = self.game.get_players_list()
@@ -104,6 +106,18 @@ class AWEnv_Gym(Env):
         }))
 
         self.update_valid_actions()
+    
+    def generate_game(self, map):
+        cos = {
+            'O': BaseCO(),
+            'B': BaseCO()
+        }
+        game = Game.load_map(
+            map_path=map,
+            players_co=cos,
+            save_history=False
+        )
+        return game
 
     # def create_action(self, action_id):
     #     # Extract action type and arguments from action index based on the shapes of actions spaces
@@ -306,7 +320,7 @@ class AWEnv_Gym(Env):
         self._valid_actions = valid_actions 
 
     def reset(self, seed=0, return_info=False, options=None):
-        self.game = self.generate_game()
+        self.game = self.generate_game(self.map)
         current_player = self.game.get_current_player()
 
         self.update_valid_actions()

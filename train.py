@@ -1,5 +1,6 @@
 import argparse
 import os
+from datetime import datetime
 
 from Game.Game import Game
 from Game.CO import BaseCO
@@ -40,18 +41,6 @@ args = parser.parse_args()
 
 print(f"Running with args: {args}")
 
-def game_generator():
-    cos = {
-        'O': BaseCO(),
-        'B': BaseCO()
-    }
-    game = Game.load_map(
-        map_path=args.map_name,
-        players_co=cos,
-        save_history=False
-    )
-    return game
-
 current_opponents = [RandomAgent()]
 if args.load_opponents:
     print("Loading opponents...")
@@ -61,7 +50,7 @@ if args.load_opponents:
     print(f"Loaded {len(opponents)} opponents: {opponent_models}")
 
 env_config = {
-    "game_generator": game_generator,
+    "map": args.map_name,
     "max_episode_steps": args.max_steps,
     "render_mode": None,
     "seed": None,
@@ -71,7 +60,7 @@ env_config = {
 env = make_vec_env(AWEnv_Gym.selfplay_env, n_envs=args.n_envs, env_kwargs={'env_config': env_config})
 
 eval_env_config = {
-    "game_generator": game_generator,
+    "map": args.map_name,
     "max_episode_steps": args.max_eval_steps,
     "render_mode": None,
     "seed": None,
@@ -101,7 +90,7 @@ else:
     model = MaskablePPO(
         policy='MultiInputPolicy', 
         env=env, 
-        verbose=1, 
+        verbose=2, 
         n_steps=args.n_steps, 
         batch_size=args.batch_size,
         learning_rate=args.lr,
@@ -110,6 +99,7 @@ else:
     )
 
 obs = env.reset()
+print("Training started at", datetime.now().strftime("%H:%M:%S"))
 model.learn(total_timesteps=args.total_timesteps, callback=selfplay_eval_callback, progress_bar=True)
 
 final_save_path = os.path.join(args.save_path, "final_model")

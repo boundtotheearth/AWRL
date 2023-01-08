@@ -5,6 +5,7 @@ import os
 import numpy as np
 from sb3_contrib import MaskablePPO
 from Agent import HumanAgent, DoNothingAgent, AIAgent, RandomAgent
+from datetime import datetime
 
 class SelfplayCallback(MaskableEvalCallback):
     def __init__(self, *args, reward_threshold = 0.9, selfplay_opponents = [], **kwargs):
@@ -18,7 +19,7 @@ class SelfplayCallback(MaskableEvalCallback):
         continue_training = True
 
         if self.eval_freq > 0 and self.n_calls % self.eval_freq == 0:
-
+            print("Evaluation started at", datetime.now().strftime("%H:%M:%S"))
             # Sync training and eval env if there is VecNormalize
             if self.model.get_vec_normalize_env() is not None:
                 try:
@@ -106,6 +107,7 @@ class SelfplayCallback(MaskableEvalCallback):
                 
             self.logger.record("eval/league_size", len(self.selfplay_opponents))
             self.logger.dump(self.num_timesteps)
+            print("Evaluation completed at", datetime.now().strftime("%H:%M:%S"))
                 
             # Trigger callback after every evaluation, if needed
             if self.callback is not None:

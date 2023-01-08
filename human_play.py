@@ -14,22 +14,8 @@ from stable_baselines3.common.env_util import make_vec_env
 
 from sb3_contrib.common.maskable.utils import get_action_masks
 
-def game_generator():
-    cos = {
-        'O': BaseCO(),
-        'B': BaseCO()
-    }
-
-    game = Game.load_map(
-        map_path="Maps/simple_build.json",
-        players_co=cos,
-        save_history=False
-    )
-
-    return game
-
 env_config = {
-    "game_generator": game_generator,
+    "map": "Maps/simple_build.json",
     "max_episode_steps": 10000,
     "render_mode": 'text',
     "seed": None,
@@ -43,10 +29,10 @@ print(env.get_attr('opponents'))
 
 env.render(mode='text')
 
-model = MaskablePPO.load("Models/simple_build/best_model")
+# model = MaskablePPO.load("Models/simple_build/best_model")
 # model = MaskablePPO.load("ppo_simple_build")
-# test_agent = RandomAgent()
-test_agent = AIAgent(model)
+test_agent = RandomAgent()
+# test_agent = AIAgent(model)
 
 while True:
     action_masks = get_action_masks(env)
@@ -55,7 +41,7 @@ while True:
     action = test_agent.get_action(observation, action_masks[0])
     print(action)
 
-    observation, reward, done, info = env.step(action)
+    observation, reward, done, info = env.step([action])
 
     if done[0]:
         print("Done", reward)
