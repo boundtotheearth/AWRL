@@ -5,6 +5,7 @@ import math
 import numpy as np
 import queue
 from scipy.sparse.csgraph import shortest_path
+import numba
 '''
 A data class
 '''
@@ -33,15 +34,16 @@ class State:
 
         self._movement_costs = {}
 
-        self._terrain_movement_costs = {
+        self._terrain_adjacency_matrix = {
             move_type: np.full((self.map_height * self.map_width, self.map_height * self.map_width), 100) for move_type in MoveType
         }
+        self._terrain_movement_costs = {}
 
         for move_type in MoveType:
             for r in range(self.map_height):
                 for c in range(self.map_width):
                     source_idx = r * self.map_width + c
-                    self._terrain_movement_costs[move_type][source_idx][source_idx] = 0
+                    self._terrain_adjacency_matrix[move_type][source_idx][source_idx] = 0
 
                     targets = [
                         (r + 1, c),
@@ -61,7 +63,9 @@ class State:
                         if cost == 0:
                             continue
 
-                        self._terrain_movement_costs[move_type][source_idx][target_idx] = cost
+                        self._terrain_adjacency_matrix[move_type][source_idx][target_idx] = cost
+            self._terrain_movement_costs[move_type] = shortest_path(self._terrain_adjacency_matrix[move_type])
+        
         self.update_movement_cost()
 
     def get_unit(self, unit_position, owner=None):
@@ -153,23 +157,67 @@ class State:
             
         return "\n".join(map_lines)
 
+    # def update_movement_cost(self):
+    #     current_player = self.get_current_player()
+    #     available_move_types = set()
+            
+    #     occupancy_grid = np.full((self.map_height * self.map_width, self.map_height * self.map_width), 0)
+    #     for position, unit in self.get_all_units().items():
+    #         if unit.owner != current_player:
+    #             occupancy_grid[:,position[0] * self.map_width + position[1]] = 100
+    #         else:
+    #             available_move_types.add(unit.move_type)
+
+    #     for move_type in available_move_types:
+    #         graph = occupancy_grid + self._terrain_movement_costs[move_type]
+    #         self._movement_costs[move_type] = shortest_path(graph)
+
+    
     def update_movement_cost(self):
         current_player = self.get_current_player()
-        available_move_types = set()
+        occupied = set([position for position, unit in self.get_all_units().items() if unit.owner != current_player])
             
-        occupancy_grid = np.full((self.map_height * self.map_width, self.map_height * self.map_width), 0)
-        for position, unit in self.get_all_units().items():
-            if unit.owner != current_player:
-                occupancy_grid[:,position[0] * self.map_width + position[1]] = 100
-            else:
-                available_move_types.add(unit.move_type)
-
-        for move_type in available_move_types:
-            graph = occupancy_grid + self._terrain_movement_costs[move_type]
-            self._movement_costs[move_type] = shortest_path(graph)
+        self._unblocked_spaces = {}
+        for position, unit in self.get_all_units(owner=current_player).items():
+            self._unblocked_spaces[position] = self.get_unblocked_spaces(position, unit, occupied)
+        
     
+    def get_unblocked_spaces(self, start, unit, occupied):
+        visited = set()
+        unblocked = set()
+        pending = [start]
+        while len(pending) > 0:
+            current = pending.pop()
+            if current in visited:
+                continue
+            visited.add(current)
+
+            if current in occupied:
+                continue
+            unblocked.add(current)
+
+            distance = abs(current[0] - start[0]) + abs(current[1] - start[1])
+            if distance + 1 > unit.move:
+                continue
+            if current[0] + 1 < self.map_height:
+                pending.append((current[0]+1, current[1]))
+            if current[0] - 1 >= 0:
+                pending.append((current[0]-1, current[1]))
+            if current[1] + 1 < self.map_width:
+                pending.append((current[0], current[1]+1))
+            if current[1] - 1 >= 0:
+                pending.append((current[0], current[1]-1))
+
+        return visited
+
     def get_movement_cost(self, start, end, unit):
-        return int(self._movement_costs[unit.move_type][start[0] * self.map_width + start[1]][end[0] * self.map_width + end[1]])
+        start_id = start[0] * self.map_width + start[1]
+        end_id = end[0] * self.map_width + end[1]
+
+        if end in self._unblocked_spaces[start]:
+            return self._terrain_movement_costs[unit.move_type][start_id][end_id]
+        else:
+            return 100
     
     def get_shortest_path(self, start, end, unit):
         start_id = start[0] * self.map_width + start[1]
@@ -182,7 +230,7 @@ class State:
             if other_unit.owner != current_player:
                 occupancy_grid[:,position[0] * self.map_width + position[1]] = 100
         
-        graph = occupancy_grid + self._terrain_movement_costs[unit.move_type]
+        graph = occupancy_grid + self._terrain_adjacency_matrix[unit.move_type]
         movement_costs, predecessors = shortest_path(graph, indices=start_id, return_predecessors=True)
 
         path = []
