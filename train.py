@@ -10,7 +10,6 @@ from SelfplayCallback import SelfplayCallback
 from util import linear_schedule
 
 from stable_baselines3.common.env_util import make_vec_env
-from stable_baselines3.common.vec_env.subproc_vec_env import SubprocVecEnv
 
 from sb3_contrib import MaskablePPO
 
@@ -59,7 +58,7 @@ if __name__ == "__main__":
         'agent_player': 'random',
         'opponent_list': current_opponents
     }
-    env = make_vec_env(AWEnv_Gym.selfplay_env, n_envs=args.n_envs, env_kwargs={'env_config': env_config}, vec_env_cls=SubprocVecEnv)
+    env = make_vec_env(AWEnv_Gym.selfplay_env, n_envs=args.n_envs, env_kwargs={'env_config': env_config})
 
     eval_env_config = {
         "map": args.map_name,
@@ -69,7 +68,7 @@ if __name__ == "__main__":
         'agent_player': 'random',
         'opponent_list': current_opponents
     }
-    eval_env = make_vec_env(AWEnv_Gym.selfplay_env, n_envs=args.n_eval_envs, env_kwargs={'env_config': eval_env_config}, vec_env_cls=SubprocVecEnv)
+    eval_env = make_vec_env(AWEnv_Gym.selfplay_env, n_envs=args.n_eval_envs, env_kwargs={'env_config': eval_env_config})
     selfplay_eval_callback = SelfplayCallback(
         eval_env=eval_env,
         n_eval_episodes=args.n_eval_episodes,
