@@ -6,6 +6,7 @@ import math
 class Action:
     def __init__(self) -> None:
         self.validated = False
+        self.invalid_message = "No Message"
 
     def execute(self):
         if not self.validated:
@@ -14,7 +15,7 @@ class Action:
     def validate(self, state):
         self.validated = True
         self.state = state
-        return True, ""
+        return True
 
     def validate_and_execute(self, state):
         if self.validated:
@@ -44,6 +45,7 @@ class ActionEnd(Action):
 
         next_player = self.state.get_current_player()
 
+        self.state.update_movement_cost()
         self.daily_fuel_consumption(next_player)
         self.daily_income(next_player)
         self.daily_unit_reset(next_player)
@@ -113,24 +115,26 @@ class ActionMove(Action):
         self.unit_to_move = state.get_unit(self.unit_position, owner=self.owner)
 
         if self.unit_to_move is None:
-            return False, f"No unit belonging to {self.owner} was found at (r:{self.unit_position[0]}, c:{self.unit_position[1]})"
+            self.invalid_message = f"No unit belonging to {self.owner} was found at (r:{self.unit_position[0]}, c:{self.unit_position[1]})"
+            return False
 
-        if not self.unit_to_move.available:
-            return False, "Unit is not available"
+        self.fuel_cost = state.get_movement_cost(self.unit_position, self.destination, self.unit_to_move)
+
+        if self.fuel_cost > self.unit_to_move.move:
+            self.invalid_message = f"Movement cost {self.fuel_cost} exceeded unit move range {self.unit_to_move.move}"
+            return False
+
+        if self.fuel_cost > self.unit_to_move.fuel:
+            self.invalid_message = "Not enough fuel"
+            return False
         
         if self.destination[0] < 0 or self.destination[0] >= state.map_height or self.destination[1] < 0 or self.destination[1] >= state.map_width:
-            return False, f"Destination {self.destination} is out of bounds"
-
-        if self.offset[0] == 0 and self.offset[1] == 0:
-            self.fuel_cost = 0
-        else:
-            self.fuel_cost = state.get_movement_cost(self.unit_position, self.destination, self.unit_to_move)
-
-            if self.fuel_cost > self.unit_to_move.move:
-                return False, f"Movement cost {self.fuel_cost} exceeded unit move range {self.unit_to_move.move}"
-
-            if self.fuel_cost > self.unit_to_move.fuel:
-                return False, "Not enough fuel"
+            self.invalid_message = f"Destination {self.destination} is out of bounds"
+            return False
+        
+        if not self.unit_to_move.available:
+            self.invalid_message = "Unit is not available"
+            return False
 
         return super().validate(state)
 
@@ -163,9 +167,10 @@ class ActionMoveCombineLoad(Action):
 
     def validate(self, state):
         if not self.move_action.validated:
-            can_move, cannot_move_reason = self.move_action.validate(state)
+            can_move = self.move_action.validate(state)
             if not can_move:
-                return False, cannot_move_reason
+                self.invalid_message = self.move_action.invalid_message
+                return False
 
         self.owner = self.move_action.owner
         self.unit_to_move = self.move_action.unit_to_move
@@ -173,26 +178,29 @@ class ActionMoveCombineLoad(Action):
         self.unit_at_destination = state.get_unit(self.move_action.destination)
         if self.unit_at_destination is not None:
             if self.unit_at_destination.owner != self.owner:
-                return False, "Destination is occupied by enemy unit"
+                self.invalid_message = "Destination is occupied by enemy unit"
+                return False
             else:
                 if type(self.unit_to_move) == type(self.unit_at_destination):
                     if self.unit_at_destination.get_display_health() == 10:
-                        return False, "Cannot combine with full health unit"
+                        self.invalid_message = "Cannot combine with full health unit"
+                        return False
                     if self.unit_at_destination is self.unit_to_move:
-                        return False, "Cannot combine with self"
+                        self.invalid_message = "Cannot combine with self"
+                        return False
                     
                     self.is_combine = True        
                 else:
                     if self.unit_at_destination.can_load(self.unit_to_move):
                         self.is_load = True
                     else:
-                        return False, f"Cannot load {self.unit_to_move} into {self.unit_at_destination}"
+                        self.invalid_message = f"Cannot load {self.unit_to_move} into {self.unit_at_destination}"
+                        return False
 
         return super().validate(state)
 
     def execute(self):
         self.move_action.execute()
-        # super().execute()
         
         if self.is_combine:
             self.excess_health = self.unit_at_destination.combine_with(self.unit_to_move)
@@ -228,39 +236,45 @@ class ActionAttack(Action):
 
     def validate(self, state):
         if not self.move_action.validated:
-            can_move, cannot_move_reason = self.move_action.validate(state)
+            can_move = self.move_action.validate(state)
             if not can_move:
-                return False, cannot_move_reason
+                self.invalid_message = self.move_action.invalid_message
+                return False
 
         self.owner = self.move_action.owner
         self.attacking_unit = self.move_action.unit_to_move
         
         self.distance = abs(self.attack_target[0] - self.destination[0]) + abs(self.attack_target[1] - self.destination[1])
         if self.distance not in self.attacking_unit.range:
-            return False, f"Target distance {self.distance} not in range for {self.attacking_unit} with range {self.attacking_unit.range}"
+            self.invalid_message = f"Target distance {self.distance} not in range for {self.attacking_unit} with range {self.attacking_unit.range}"
+            return False
 
         self.defending_unit = state.get_unit(self.attack_target)
         if self.defending_unit is None:
-            return False, f"No unit to attack at (r:{self.attack_target[0]}, c:{self.attack_target[1]})"
+            self.invalid_message = f"No unit to attack at (r:{self.attack_target[0]}, c:{self.attack_target[1]})"
+            return False
 
         if self.defending_unit.owner is self.owner:
-            return False, "Cannot attack own unit"
+            self.invalid_message = "Cannot attack own unit"
+            return False
 
         if type(self.defending_unit) not in self.attacking_unit.attack_table:
-            return False, f"{self.defending_unit} cannot attack {self.attacking_unit}"
+            self.invalid_message = f"{self.defending_unit} cannot attack {self.attacking_unit}"
+            return False
         
         self.attacker_ammo_used = self.attacking_unit.attack_table.get(type(self.defending_unit), ())[1]
         if self.attacking_unit.ammo - self.attacker_ammo_used < 0:
-            return False, "Not enough ammo"
+            self.invalid_message = "Not enough ammo"
+            return False
 
         unit_at_destination = state.get_unit(self.destination)
         if unit_at_destination is not None and unit_at_destination is not self.attacking_unit:
-            return False, "Destination is occupied"
+            self.invalid_message = "Destination is occupied"
+            return False
 
         return super().validate(state)
     
     def execute(self):
-        # super().execute()
         self.move_action.execute()
 
         self.attacking_co = self.state.co[self.owner]
@@ -276,6 +290,7 @@ class ActionAttack(Action):
             self.state.remove_unit(self.attack_target)
             if self.defending_unit.can_capture and isinstance(self.defending_terrain, Property):
                 self.defending_terrain.change_capture(self.defending_terrain.owner, 20)
+            self.state.update_movement_cost()
 
         self.attacking_unit.available = False
 
@@ -284,20 +299,21 @@ class ActionAttack(Action):
 
 class ActionDirectAttack(ActionAttack):
     def validate(self, state):
-        can_move, cannot_move_reason = super().validate(state)
+        can_move = super().validate(state)
         self.validated = False
         if not can_move:
-            return False, cannot_move_reason
+            return False
 
         if self.distance != 1:
-            return False, f"Target distance {self.distance} not valid for direct attack"
+            self.invalid_message = f"Target distance {self.distance} not valid for direct attack"
+            return False
 
         if type(self.attacking_unit) in self.defending_unit.attack_table:
             self.defender_ammo_used = self.attacking_unit.attack_table.get(type(self.defending_unit), ())[1]
             if self.distance == 1 and 1 in self.defending_unit.range and self.defending_unit.ammo - self.defender_ammo_used >= 0:
                 self.can_counterattack = True
         
-        return True, ""
+        return True
 
     def execute(self):
         super().execute()
@@ -310,24 +326,27 @@ class ActionDirectAttack(ActionAttack):
                 self.state.remove_unit(self.unit_position)
                 if self.attacking_unit.can_capture and isinstance(self.attacking_unit, Property):
                     self.attacking_unit.change_capture(self.attacking_unit.owner, 20)
+                self.state.update_movement_cost()
 
 class ActionIndirectAttack(ActionAttack):
     def __init__(self, unit_position, attack_offset) -> None:
         super().__init__(ActionMove(unit_position, (0, 0)), attack_offset)
 
     def validate(self, state):
-        can_move, cannot_move_reason = super().validate(state)
+        can_move = super().validate(state)
         self.validated = False
         if not can_move:
-            return False, cannot_move_reason
+            return False
 
         if self.distance < 2:
-            return False, f"Target distance {self.distance} not valid for indirect attack"
+            self.invalid_message = f"Target distance {self.distance} not valid for indirect attack"
+            return False
         
         if self.unit_position != self.destination and self.distance > 1:
-            return False, f"Cannot move and indirect attack"
+            self.invalid_message = f"Cannot move and indirect attack"
+            return False
 
-        return True, ""
+        return True
 
 class ActionCapture(Action):
     def __init__(self, move_action) -> None:
@@ -338,25 +357,30 @@ class ActionCapture(Action):
 
     def validate(self, state):
         if not self.move_action.validated:
-            can_move, cannot_move_reason = self.move_action.validate(state)
+            can_move = self.move_action.validate(state)
             if not can_move:
-                return False, cannot_move_reason
+                self.invalid_message = self.move_action.invalid_message
+                return False
 
         self.owner = self.move_action.owner
         self.capturing_unit = self.move_action.unit_to_move
 
         unit_at_destination = state.get_unit(self.destination)
         if unit_at_destination is not None and unit_at_destination is not self.capturing_unit:
-            return False, "Destination is occupied"
+            self.invalid_message = "Destination is occupied"
+            return False
 
         if not self.capturing_unit.can_capture:
-            return False, f"{self.capturing_unit} cannot capture properties"
+            self.invalid_message = f"{self.capturing_unit} cannot capture properties"
+            return False
         
         self.property = state.get_property(self.capture_target)
         if self.property is None:
-            return False, f"No property belonging to {self.owner} was found at {self.capture_target}"
+            self.invalid_message = f"No property belonging to {self.owner} was found at {self.capture_target}"
+            return False
         if self.property.owner is self.owner:
-            return False, "Cannot capture own property"
+            self.invalid_message = "Cannot capture own property"
+            return False
 
         return super().validate(state)
     
@@ -380,18 +404,22 @@ class ActionBuild(Action):
         self.owner = state.get_current_player()
         property = state.get_property(self.property_position, owner=self.owner)
         if property is None:
-            return False, f"No property owned by {self.owner} found at (r:{self.property_position[0]}, c:{self.property_position[1]})"
+            self.invalid_message = f"No property owned by {self.owner} found at (r:{self.property_position[0]}, c:{self.property_position[1]})"
+            return False
         
         self.new_unit = state.unit_library.create(self.unit_code, self.owner)
         if state.funds[self.owner] < self.new_unit.cost:
-            return False, "Cannot afford to build"
+            self.invalid_message = "Cannot afford to build"
+            return False
 
         if type(self.new_unit) not in property.buildables:
-            return False, f"{property} cannot build {self.unit_code}"
+            self.invalid_message = f"{property} cannot build {self.unit_code}"
+            return False
 
         unit_at_position = state.get_unit(self.property_position)
         if unit_at_position:
-            return False, "Property is already occupied"
+            self.invalid_message = "Property is already occupied"
+            return False
 
         return super().validate(state)
 
@@ -417,31 +445,37 @@ class ActionRepair(Action):
 
     def validate(self, state):
         if not self.move_action.validated:
-            can_move, cannot_move_reason = self.move_action.validate(state)
+            can_move = self.move_action.validate(state)
             if not can_move:
-                return False, cannot_move_reason
+                self.invalid_message = self.move_action.invalid_message
+                return False
 
         self.owner = self.move_action.owner
         self.repairing_unit = self.move_action.unit_to_move
 
         if abs(self.repair_offset[0]) + abs(self.repair_offset[1]) != 1:
-            return False, "Invalid repair direction"
+            self.invalid_message = "Invalid repair direction"
+            return False
 
         unit_at_destination = state.get_unit(self.destination)
         if unit_at_destination is not None and unit_at_destination is not self.repairing_unit:
-            return False, "Destination is occupied"
+            self.invalid_message = "Destination is occupied"
+            return False
 
         if not self.repairing_unit.can_repair:
-            return False, "{repairing_unit} cannot perform repairs"
+            self.invalid_message = f"{self.repairing_unit} cannot perform repairs"
+            return False
 
         self.unit_to_repair = state.get_unit(self.repair_target, owner=self.owner)
         if self.unit_to_repair is None:
-            return False, f"No unit belonging to {self.owner} was found at (r:{self.repair_target[0]}, c:{self.repair_target[1]})"
+            self.invalid_message = f"No unit belonging to {self.owner} was found at (r:{self.repair_target[0]}, c:{self.repair_target[1]})"
+            return False
 
         self.repair_amount = min(self.repairing_unit.repair_amount, 10 - self.unit_to_repair.get_display_health())
         self.cost = (self.repair_amount / 10) * self.unit_to_repair.cost
         if state.funds[self.owner] < self.cost:
-            return False, "Not enough funds"
+            self.invalid_message = "Not enough funds"
+            return False
 
         return super().validate(state)
 
@@ -469,45 +503,55 @@ class ActionUnload(Action):
 
     def validate(self, state):
         if not self.move_action.validated:
-            can_move, cannot_move_reason = self.move_action.validate(state)
+            can_move = self.move_action.validate(state)
             if not can_move:
-                return False, cannot_move_reason
+                self.invalid_message = self.move_action.invalid_message
+                return False
 
         self.unloading_unit = self.move_action.unit_to_move
 
         if abs(self.unload_offset[0]) + abs(self.unload_offset[1]) != 1:
-            return False, "Invalid unload direction"
+            self.invalid_message = "Invalid unload direction"
+            return False
 
         unit_at_destination = state.get_unit(self.destination)
         if unit_at_destination is not None and unit_at_destination is not self.unloading_unit:
-            return False, "Destination is occupied"
+            self.invalid_message = "Destination is occupied"
+            return False
         
         if not self.unloading_unit.can_unload(self.idx):
-            return False, "Nothing to unload"
+            self.invalid_message = "Nothing to unload"
+            return False
 
         distance = abs(self.destination[0] - self.unload_position[0]) + abs(self.destination[1] - self.unload_position[1])
         
         if distance > 1:
-            return False, "Can only unload adjacent to the unit"
+            self.invalid_message = "Can only unload adjacent to the unit"
+            return False
 
         if not self.unloading_unit.can_unload(self.idx):
-            return False, "Invalid unit index"
+            self.invalid_message = "Invalid unit index"
+            return False
 
         self.unloaded_unit = self.unloading_unit.in_load[self.idx]
         terrain = state.get_terrain(self.unload_position)
         if terrain is None:
-            return False, f"{self.unload_position} is not a valid unload position"
+            self.invalid_message = f"{self.unload_position} is not a valid unload position"
+            return False
 
         if terrain.get_move_cost(self.unloaded_unit.move_type) == 0:
-            return False, f"{self.unloaded_unit} cannot be placed on {terrain}"
+            self.invalid_message = f"{self.unloaded_unit} cannot be placed on {terrain}"
+            return False
 
         own_terrain = state.get_terrain(self.destination)
         if own_terrain.get_move_cost(self.unloaded_unit.move_type) == 0:
-            return False, f"{self.unloading_unit} cannot unload while on {terrain}"
+            self.invalid_message = f"{self.unloading_unit} cannot unload while on {terrain}"
+            return False
 
         unit_at_position = state.get_unit(self.unload_position)
         if unit_at_position:
-            return False, "Already something there"
+            self.invalid_message = "Already something there"
+            return False
 
         return super().validate(state)
 

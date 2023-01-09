@@ -14,7 +14,6 @@ from Game.Game import Game
 from Game.CO import BaseCO
 from Game.Action import Action, ActionEnd, ActionMove, ActionMoveCombineLoad, ActionDirectAttack, ActionIndirectAttack, ActionCapture, ActionBuild, ActionRepair, ActionUnload
 from Agent import Agent
-from util import parse_direction, parse_direction_reverse
 
 from enum import Enum
 
@@ -53,6 +52,8 @@ class AWEnv_Gym(Env):
                 ),
                 max_episode_steps=env_config.get("max_episode_steps")
             )
+
+    possible_directions = [(-1, 0), (1, 0), (0, 1), (0, -1)]
 
     def __init__(self, env_config):
         super().__init__()
@@ -226,8 +227,7 @@ class AWEnv_Gym(Env):
 
         end_action_id = self.action_start_ids[ActionEnd]
         valid_actions[end_action_id] = ActionEnd()
-
-        possible_directions = [(-1, 0), (1, 0), (0, 1), (0, -1)]
+        
         for position, unit in current_state.get_all_units(current_player).items():
             r, c = position
             if unit.available:
@@ -241,7 +241,7 @@ class AWEnv_Gym(Env):
                         attack_offset_id_c = attack_offset_c + self.max_attack
 
                         indirect_attack_action = ActionIndirectAttack(position, (attack_offset_r, attack_offset_c))
-                        if indirect_attack_action.validate(current_state)[0]:
+                        if indirect_attack_action.validate(current_state):
                             sub_action_id = np.ravel_multi_index((r, c, attack_offset_id_r, attack_offset_id_c), self.actions[ActionIndirectAttack])
                             action_id = self.action_start_ids[ActionIndirectAttack] + sub_action_id
                             valid_actions[action_id] = indirect_attack_action
@@ -251,7 +251,7 @@ class AWEnv_Gym(Env):
                     for move_offset_c in range(-remaining_move, remaining_move+1):
                         move_offset = (move_offset_r, move_offset_c)
                         move_action = ActionMove(unit_position=position, offset=move_offset)
-                        if not move_action.validate(current_state)[0]:
+                        if not move_action.validate(current_state):
                             continue
 
                         # Avoid negative indices
@@ -259,48 +259,45 @@ class AWEnv_Gym(Env):
                         move_id_c = move_offset_c + self.max_move
                         #Move/Combine/Load
                         move_combine_load_action = ActionMoveCombineLoad(move_action=move_action)
-                        if move_combine_load_action.validate(current_state)[0]:
+                        if move_combine_load_action.validate(current_state):
                             sub_action_id = np.ravel_multi_index((r, c, move_id_r, move_id_c), self.actions[ActionMoveCombineLoad])
                             action_id = self.action_start_ids[ActionMoveCombineLoad] + sub_action_id
                             valid_actions[action_id] = move_combine_load_action
                         
                         #Direct Attack
-                        for direction in possible_directions:
+                        for direction_index, direction in enumerate(self.possible_directions):
                             direct_attack_action = ActionDirectAttack(move_action=move_action, attack_offset=direction)
                             if direct_attack_action.attack_target not in enemy_units:
                                 continue
 
-                            if direct_attack_action.validate(current_state)[0]:
-                                direction_index = parse_direction_reverse(direction)
+                            if direct_attack_action.validate(current_state):
                                 sub_action_id = np.ravel_multi_index((r, c, move_id_r, move_id_c, direction_index), self.actions[ActionDirectAttack])
                                 action_id = self.action_start_ids[ActionDirectAttack] + sub_action_id
                                 valid_actions[action_id] = direct_attack_action
 
                         #Capture
                         capture_action = ActionCapture(move_action=move_action)
-                        if capture_action.validate(current_state)[0]:
+                        if capture_action.validate(current_state):
                             sub_action_id = np.ravel_multi_index((r, c, move_id_r, move_id_c), self.actions[ActionCapture])
                             action_id = self.action_start_ids[ActionCapture] + sub_action_id
                             valid_actions[action_id] = capture_action
 
                         #Repair
                         if unit.can_repair:
-                            for direction in possible_directions:
+                            for direction_index, direction in enumerate(self.possible_directions):
                                 repair_action = ActionRepair(move_action=move_action, repair_offset=direction)
-                                if repair_action.validate(current_state)[0]:
-                                    direction_index = parse_direction_reverse(direction)
+                                if repair_action.validate(current_state):
                                     sub_action_id = np.ravel_multi_index((r, c, move_id_r, move_id_c, direction_index), self.actions[ActionRepair])
                                     action_id = self.action_start_ids[ActionRepair] + sub_action_id
                                     valid_actions[action_id] = repair_action
 
                         #Unload
                         for idx in range(len(unit.in_load)):
-                            for direction in possible_directions:
+                            for direction_index, direction in enumerate(self.possible_directions):
                                 unload_action = ActionUnload(move_action=move_action, unload_offset=direction, idx=idx)
                                 if unload_action.unload_position in all_units:
                                     continue
-                                if unload_action.validate(current_state)[0]:
-                                    direction_index = parse_direction_reverse(direction)
+                                if unload_action.validate(current_state):
                                     sub_action_id = np.ravel_multi_index((r, c, move_id_r, move_id_c, direction_index, idx), self.actions[ActionUnload])
                                     action_id = self.action_start_ids[ActionUnload] + sub_action_id
                                     valid_actions[action_id] = unload_action
@@ -311,7 +308,7 @@ class AWEnv_Gym(Env):
             for unit_type in property.buildables:
                 idx = self.unit_list.index(unit_type)
                 build_action = ActionBuild(position, unit_type.code)
-                if build_action.validate(current_state)[0]:
+                if build_action.validate(current_state):
                     sub_action_id = np.ravel_multi_index((r, c, idx), self.actions[ActionBuild])
                     action_id = self.action_start_ids[ActionBuild] + sub_action_id
                     valid_actions[action_id] = build_action

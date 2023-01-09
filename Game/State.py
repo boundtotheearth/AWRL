@@ -184,28 +184,28 @@ class State:
     
     def get_unblocked_spaces(self, start, unit, occupied):
         visited = set()
-        unblocked = set()
         pending = [start]
         while len(pending) > 0:
             current = pending.pop()
-            if current in visited:
+            
+            if current in visited or current in occupied:
                 continue
             visited.add(current)
-
-            if current in occupied:
-                continue
-            unblocked.add(current)
 
             distance = abs(current[0] - start[0]) + abs(current[1] - start[1])
             if distance + 1 > unit.move:
                 continue
-            if current[0] + 1 < self.map_height:
-                pending.append((current[0]+1, current[1]))
-            if current[0] - 1 >= 0:
-                pending.append((current[0]-1, current[1]))
-            if current[1] + 1 < self.map_width:
-                pending.append((current[0], current[1]+1))
-            if current[1] - 1 >= 0:
+            above = current[0] + 1
+            if above < self.map_height:
+                pending.append((above, current[1]))
+            below = current[0] - 1
+            if below >= 0:
+                pending.append((below, current[1]))
+            right = current[1] + 1
+            if right < self.map_width:
+                pending.append((current[0], right))
+            left = current[1] - 1
+            if left >= 0:
                 pending.append((current[0], current[1]-1))
 
         return visited

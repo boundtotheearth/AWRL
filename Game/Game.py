@@ -90,16 +90,14 @@ class Game:
 
     def execute_action(self, action):
         if not action.validated:
-            is_valid, invalid_reason = action.validate(self.state)
+            is_valid = action.validate(self.state)
             if not is_valid:
-                raise Exception(f"{action}: {invalid_reason}")
+                raise Exception(f"{action}: {action.invalid_message}")
 
         action.execute()
 
         if self.save_history:
             self.record_action(action)
-
-        self.state.update_movement_cost()
 
         return self.state.check_winner()
 

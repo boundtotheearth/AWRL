@@ -73,6 +73,20 @@ def test_cannot_move_through_enemy_unit(generate_test_game):
     with pytest.raises(Exception):
         game.execute_action(move_action)
 
+# Can move around enemy unit
+def test_can_move_around_enemy_unit(generate_test_game):
+    units = {(0, 0): ("REC", "O"), (0, 1): ("INF", "B")}
+    terrain = [
+        ["PLN", "PLN", "PLN"],
+        ["PLN", "PLN", "PLN"]
+    ]
+    
+    game = generate_test_game(terrain=terrain, units=units)
+
+    move_action = ActionMoveCombineLoad(ActionMove(unit_position=(0, 0), offset=(0, 2)))
+    game.execute_action(move_action)
+    assert game.state.get_unit((0, 2)) is not None
+
 # Move consumes fuel
 def test_move_fuel_consumption(generate_test_game, terrain_library, unit_library):
     test_unit = unit_library.create("REC", "O")
