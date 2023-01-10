@@ -5,7 +5,6 @@ import math
 import numpy as np
 import queue
 from scipy.sparse.csgraph import shortest_path
-import numba
 '''
 A data class
 '''
