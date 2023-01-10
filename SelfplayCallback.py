@@ -1,4 +1,5 @@
 from sb3_contrib.common.maskable.callbacks import MaskableEvalCallback
+from stable_baselines3.common.callbacks import EventCallback
 from stable_baselines3.common.vec_env import sync_envs_normalization
 from sb3_contrib.common.maskable.evaluation import evaluate_policy
 import os
@@ -6,13 +7,72 @@ import numpy as np
 from sb3_contrib import MaskablePPO
 from Agent import HumanAgent, DoNothingAgent, AIAgent, RandomAgent
 from datetime import datetime
+from copy import deepcopy
+from stable_baselines3.common.env_util import make_vec_env
+from AWEnv_Gym import AWEnv_Gym
 
-class SelfplayCallback(MaskableEvalCallback):
-    def __init__(self, *args, reward_threshold = 0.9, selfplay_opponents = [], **kwargs):
-        super().__init__(*args, **kwargs)
+class SelfplayCallback(EventCallback):
+    def __init__(self,
+        eval_freq = 10000,
+        log_path = None,
+        best_model_save_path = None,
+        deterministic = True,
+        callback_after_eval = None,
+        verbose = 0,
+        reward_threshold = 0.9,
+        selfplay_opponents = [],
+        eval_env_config = {},
+        n_eval_envs = 1,
+        n_eval_episodes_per_opponent = 10
+    ):
+        super().__init__(callback_after_eval, verbose=verbose)
+
+        self.eval_freq = eval_freq
+        self.best_mean_reward = -np.inf
+        self.last_mean_reward = -np.inf
+        self.deterministic = deterministic
+
+        self.best_model_save_path = best_model_save_path
+        # Logs will be written in ``evaluations.npz``
+        if log_path is not None:
+            log_path = os.path.join(log_path, "evaluations")
+        self.log_path = log_path
+        self.evaluations_results = []
+        self.evaluations_timesteps = []
+        self.evaluations_length = []
+        # For computing success rate
+        self._is_success_buffer = []
+        self.evaluations_successes = []
+
         self.reward_threshold = reward_threshold
         self.selfplay_opponents = selfplay_opponents
+        self.eval_env_config = eval_env_config
+        self.n_eval_envs = n_eval_envs
+        self.n_eval_episodes_per_opponent = n_eval_episodes_per_opponent
         assert self.best_model_save_path is not None, "Need a path to save opponents to"
+
+    def _init_callback(self) -> None:
+        # Create folders if needed
+        if self.best_model_save_path is not None:
+            os.makedirs(self.best_model_save_path, exist_ok=True)
+        if self.log_path is not None:
+            os.makedirs(os.path.dirname(self.log_path), exist_ok=True)
+
+    def _log_success_callback(self, locals_, globals_):
+        """
+        Callback passed to the  ``evaluate_policy`` function
+        in order to log the success rate (when applicable),
+        for instance when using HER.
+
+        :param locals_:
+        :param globals_:
+        """
+        info = locals_["info"]
+
+        if locals_["done"]:
+            maybe_is_success = info.get("is_success")
+            if maybe_is_success is not None:
+                self._is_success_buffer.append(maybe_is_success)
 
     def _on_rollout_start(self) -> None:
         print("Rollout started at", datetime.now().strftime("%H:%M:%S"))
@@ -40,18 +100,35 @@ class SelfplayCallback(MaskableEvalCallback):
             # Reset success rate buffer
             self._is_success_buffer = []
 
-            # Note that evaluate_policy() has been patched to support masking
-            episode_rewards, episode_lengths = evaluate_policy(
-                self.model,
-                self.eval_env,
-                n_eval_episodes=self.n_eval_episodes,
-                render=self.render,
-                deterministic=self.deterministic,
-                return_episode_rewards=True,
-                warn=self.warn,
-                callback=self._log_success_callback,
-                use_masking=self.use_masking,
-            )
+            self.logger.record("league/league_size", len(self.selfplay_opponents))
+
+            episode_rewards = []
+            episode_lengths = []
+            for opponent in self.selfplay_opponents:
+                env_config = deepcopy(self.eval_env_config)
+                env_config['opponents'] = [opponent]
+                eval_env = make_vec_env(AWEnv_Gym.selfplay_env, n_envs=self.n_eval_envs, env_kwargs={'env_config': env_config})
+                
+                episode_rewards_for_opponent, episode_lengths_for_opponent = evaluate_policy(
+                    self.model,
+                    eval_env,
+                    n_eval_episodes=self.n_eval_episodes_per_opponent,
+                    render=self.render,
+                    deterministic=self.deterministic,
+                    return_episode_rewards=True,
+                    warn=self.warn,
+                    callback=self._log_success_callback,
+                    use_masking=self.use_masking,
+                )
+                mean_reward_for_opponent, std_reward_for_opponent = np.mean(episode_rewards_for_opponent), np.std(episode_rewards_for_opponent)
+                mean_ep_length_for_opponent, std_ep_length_for_opponent = np.mean(episode_lengths_for_opponent), np.std(episode_lengths_for_opponent)
+
+                self.logger.record("league/league_size", len(self.selfplay_opponents))
+                self.logger.record(f"league/{opponent}/episode reward", f"{mean_reward_for_opponent} +/- {std_reward_for_opponent}")
+                self.logger.record(f"league/{opponent}/episode length", f"{mean_ep_length_for_opponent} +/- {std_ep_length_for_opponent}")
+
+                episode_rewards.extend(episode_rewards_for_opponent)
+                episode_lengths.extend(episode_lengths_for_opponent)
 
             if self.log_path is not None:
                 self.evaluations_timesteps.append(self.num_timesteps)
@@ -106,12 +183,12 @@ class SelfplayCallback(MaskableEvalCallback):
                 if self.verbose > 0:
                     print("Exceeded reward threshold! Adding a new opponent!")
                 new_model_id = len(self.selfplay_opponents)
-                self.model.save(os.path.join(self.best_model_save_path, f"model_{new_model_id}"))
+                new_model_name = f"model_{new_model_id}"
+                self.model.save(os.path.join(self.best_model_save_path, new_model_name))
                 new_model = MaskablePPO.load(os.path.join(self.best_model_save_path, f"model_{new_model_id}"))
-                self.selfplay_opponents.append(AIAgent(new_model))
+                self.selfplay_opponents.append(AIAgent(new_model, name=new_model_name))
                 self.best_mean_reward = -np.inf
                 
-            self.logger.record("eval/league_size", len(self.selfplay_opponents))
             self.logger.dump(self.num_timesteps)
             print("Evaluation completed at", datetime.now().strftime("%H:%M:%S"))
                 
@@ -120,3 +197,12 @@ class SelfplayCallback(MaskableEvalCallback):
                 continue_training = continue_training and self._on_event()
 
         return continue_training
+
+    def update_child_locals(self, locals_):
+        """
+        Update the references to the local variables.
+
+        :param locals_: the local variables during rollout collection
+        """
+        if self.callback:
+            self.callback.update_locals(locals_)

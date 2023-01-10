@@ -12,12 +12,12 @@ class SelfplayWrapper(Wrapper):
 
     def reset(self):
         observation = super().reset()
-        observation, reward, done, info = self.play_opponent_turns(observation)
         if self.env_config['agent_player'] == 'random':
             self.agent_player = random.choice(self.env.game.players)
-        
         self._reset_opponents()
 
+        observation, reward, done, info = self.play_opponent_turns(observation)
+        
         return observation
 
     def _reset_opponents(self):
@@ -41,7 +41,7 @@ class SelfplayWrapper(Wrapper):
         elif winner is not None:
             reward = -1
         else:
-            reward = -0.001
+            reward = -1 / self.env_config.get("max_episode_steps")
         
         return observation, reward, done, info
 

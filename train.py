@@ -46,7 +46,7 @@ if __name__ == "__main__":
     if args.load_opponents:
         print("Loading opponents...")
         opponent_models = [os.path.join(args.load_opponents, f).replace(".zip", "") for f in os.listdir(args.load_opponents) if os.path.isfile(os.path.join(args.load_opponents, f)) and ".zip" in f]
-        opponents = [AIAgent(MaskablePPO.load(model)) for model in opponent_models]
+        opponents = [AIAgent(MaskablePPO.load(model), name=model) for model in opponent_models]
         current_opponents.extend(opponents)
         print(f"Loaded {len(opponents)} opponents: {opponent_models}")
 
@@ -68,10 +68,10 @@ if __name__ == "__main__":
         'agent_player': 'random',
         'opponent_list': current_opponents
     }
-    eval_env = make_vec_env(AWEnv_Gym.selfplay_env, n_envs=args.n_eval_envs, env_kwargs={'env_config': eval_env_config})
+    # eval_env = make_vec_env(AWEnv_Gym.selfplay_env, n_envs=args.n_eval_envs, env_kwargs={'env_config': eval_env_config})
     selfplay_eval_callback = SelfplayCallback(
-        eval_env=eval_env,
-        n_eval_episodes=args.n_eval_episodes,
+        n_eval_envs=args.n_eval_envs,
+        n_eval_episodes_per_opponent=args.n_eval_episodes,
         best_model_save_path=args.save_path,
         eval_freq=args.eval_freq,
         reward_threshold=args.reward_threshold,
