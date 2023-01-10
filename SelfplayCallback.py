@@ -14,6 +14,12 @@ class SelfplayCallback(MaskableEvalCallback):
         self.selfplay_opponents = selfplay_opponents
         assert self.best_model_save_path is not None, "Need a path to save opponents to"
 
+    def _on_rollout_start(self) -> None:
+        print("Rollout started at", datetime.now().strftime("%H:%M:%S"))
+
+    def _on_rollout_end(self) -> None:
+        print("Rollout ended at", datetime.now().strftime("%H:%M:%S"))
+
     def _on_step(self) -> bool:
 
         continue_training = True

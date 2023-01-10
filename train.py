@@ -85,13 +85,20 @@ if __name__ == "__main__":
 
     if args.from_checkpoint:
         print("Loading from checkpoint")
-        model = MaskablePPO.load(args.from_checkpoint, env=env)
+        model = MaskablePPO.load(
+            args.from_checkpoint,
+            env=env,
+            n_steps=args.n_steps,
+            batch_size=args.batch_size,
+            learning_rate=args.lr,
+            n_epochs=args.n_epochs
+        )
     else:
         print("Train from scratch")
         model = MaskablePPO(
             policy='MultiInputPolicy', 
             env=env, 
-            verbose=2, 
+            verbose=1, 
             n_steps=args.n_steps, 
             batch_size=args.batch_size,
             learning_rate=args.lr,

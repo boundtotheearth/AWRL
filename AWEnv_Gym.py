@@ -7,6 +7,7 @@ import copy
 import pprint
 import random
 import numpy as np
+from numpy import ravel_multi_index
 import math
 from collections import OrderedDict
 
@@ -227,80 +228,86 @@ class AWEnv_Gym(Env):
 
         end_action_id = self.action_start_ids[ActionEnd]
         valid_actions[end_action_id] = ActionEnd()
+
+        possible_directions = self.possible_directions
         
-        for position, unit in current_state.get_all_units(current_player).items():
+        for position, unit in all_units.items():
+            if unit.owner != current_player:
+                continue
+
             r, c = position
-            if unit.available:
-                #Indirect Attack
-                if 1 not in unit.range:
-                    for attack_position in enemy_units:
-                        attack_offset_r = attack_position[0] - r
-                        attack_offset_c = attack_position[1] - c
+            if not unit.available:
+                continue
+            #Indirect Attack
+            if 1 not in unit.range:
+                for attack_position_r, attack_position_c in enemy_units:
+                    attack_offset_r = attack_position_r - r
+                    attack_offset_c = attack_position_c - c
 
-                        attack_offset_id_r = attack_offset_r + self.max_attack
-                        attack_offset_id_c = attack_offset_c + self.max_attack
+                    attack_offset_id_r = attack_offset_r + self.max_attack
+                    attack_offset_id_c = attack_offset_c + self.max_attack
 
-                        indirect_attack_action = ActionIndirectAttack(position, (attack_offset_r, attack_offset_c))
-                        if indirect_attack_action.validate(current_state):
-                            sub_action_id = np.ravel_multi_index((r, c, attack_offset_id_r, attack_offset_id_c), self.actions[ActionIndirectAttack])
-                            action_id = self.action_start_ids[ActionIndirectAttack] + sub_action_id
-                            valid_actions[action_id] = indirect_attack_action
+                    indirect_attack_action = ActionIndirectAttack(position, (attack_offset_r, attack_offset_c))
+                    if indirect_attack_action.validate(current_state):
+                        sub_action_id = ravel_multi_index((r, c, attack_offset_id_r, attack_offset_id_c), self.actions[ActionIndirectAttack])
+                        action_id = self.action_start_ids[ActionIndirectAttack] + sub_action_id
+                        valid_actions[action_id] = indirect_attack_action
 
-                for move_offset_r in range(-unit.move, unit.move+1):
-                    remaining_move = unit.move - abs(move_offset_r)
-                    for move_offset_c in range(-remaining_move, remaining_move+1):
-                        move_offset = (move_offset_r, move_offset_c)
-                        move_action = ActionMove(unit_position=position, offset=move_offset)
-                        if not move_action.validate(current_state):
+            for unblocked_position_r, unblocked_position_c in current_state._unblocked_spaces[position]:
+                move_offset_r = unblocked_position_r - r
+                move_offset_c = unblocked_position_c - c
+            
+                move_action = ActionMove(unit_position=position, offset=(move_offset_r, move_offset_c))
+                if not move_action.validate(current_state):
+                    continue
+
+                # Avoid negative indices
+                move_id_r = move_offset_r + self.max_move
+                move_id_c = move_offset_c + self.max_move
+                #Move/Combine/Load
+                move_combine_load_action = ActionMoveCombineLoad(move_action=move_action)
+                if move_combine_load_action.validate(current_state):
+                    sub_action_id = ravel_multi_index((r, c, move_id_r, move_id_c), self.actions[ActionMoveCombineLoad])
+                    action_id = self.action_start_ids[ActionMoveCombineLoad] + sub_action_id
+                    valid_actions[action_id] = move_combine_load_action
+                
+                #Direct Attack
+                for direction_index, direction in enumerate(possible_directions):
+                    direct_attack_action = ActionDirectAttack(move_action=move_action, attack_offset=direction)
+                    if direct_attack_action.attack_target not in enemy_units:
+                        continue
+
+                    if direct_attack_action.validate(current_state):
+                        sub_action_id = ravel_multi_index((r, c, move_id_r, move_id_c, direction_index), self.actions[ActionDirectAttack])
+                        action_id = self.action_start_ids[ActionDirectAttack] + sub_action_id
+                        valid_actions[action_id] = direct_attack_action
+
+                #Capture
+                capture_action = ActionCapture(move_action=move_action)
+                if capture_action.validate(current_state):
+                    sub_action_id = ravel_multi_index((r, c, move_id_r, move_id_c), self.actions[ActionCapture])
+                    action_id = self.action_start_ids[ActionCapture] + sub_action_id
+                    valid_actions[action_id] = capture_action
+
+                #Repair
+                if unit.can_repair:
+                    for direction_index, direction in enumerate(possible_directions):
+                        repair_action = ActionRepair(move_action=move_action, repair_offset=direction)
+                        if repair_action.validate(current_state):
+                            sub_action_id = ravel_multi_index((r, c, move_id_r, move_id_c, direction_index), self.actions[ActionRepair])
+                            action_id = self.action_start_ids[ActionRepair] + sub_action_id
+                            valid_actions[action_id] = repair_action
+
+                #Unload
+                for idx in range(len(unit.in_load)):
+                    for direction_index, direction in enumerate(possible_directions):
+                        unload_action = ActionUnload(move_action=move_action, unload_offset=direction, idx=idx)
+                        if unload_action.unload_position in all_units:
                             continue
-
-                        # Avoid negative indices
-                        move_id_r = move_offset_r + self.max_move
-                        move_id_c = move_offset_c + self.max_move
-                        #Move/Combine/Load
-                        move_combine_load_action = ActionMoveCombineLoad(move_action=move_action)
-                        if move_combine_load_action.validate(current_state):
-                            sub_action_id = np.ravel_multi_index((r, c, move_id_r, move_id_c), self.actions[ActionMoveCombineLoad])
-                            action_id = self.action_start_ids[ActionMoveCombineLoad] + sub_action_id
-                            valid_actions[action_id] = move_combine_load_action
-                        
-                        #Direct Attack
-                        for direction_index, direction in enumerate(self.possible_directions):
-                            direct_attack_action = ActionDirectAttack(move_action=move_action, attack_offset=direction)
-                            if direct_attack_action.attack_target not in enemy_units:
-                                continue
-
-                            if direct_attack_action.validate(current_state):
-                                sub_action_id = np.ravel_multi_index((r, c, move_id_r, move_id_c, direction_index), self.actions[ActionDirectAttack])
-                                action_id = self.action_start_ids[ActionDirectAttack] + sub_action_id
-                                valid_actions[action_id] = direct_attack_action
-
-                        #Capture
-                        capture_action = ActionCapture(move_action=move_action)
-                        if capture_action.validate(current_state):
-                            sub_action_id = np.ravel_multi_index((r, c, move_id_r, move_id_c), self.actions[ActionCapture])
-                            action_id = self.action_start_ids[ActionCapture] + sub_action_id
-                            valid_actions[action_id] = capture_action
-
-                        #Repair
-                        if unit.can_repair:
-                            for direction_index, direction in enumerate(self.possible_directions):
-                                repair_action = ActionRepair(move_action=move_action, repair_offset=direction)
-                                if repair_action.validate(current_state):
-                                    sub_action_id = np.ravel_multi_index((r, c, move_id_r, move_id_c, direction_index), self.actions[ActionRepair])
-                                    action_id = self.action_start_ids[ActionRepair] + sub_action_id
-                                    valid_actions[action_id] = repair_action
-
-                        #Unload
-                        for idx in range(len(unit.in_load)):
-                            for direction_index, direction in enumerate(self.possible_directions):
-                                unload_action = ActionUnload(move_action=move_action, unload_offset=direction, idx=idx)
-                                if unload_action.unload_position in all_units:
-                                    continue
-                                if unload_action.validate(current_state):
-                                    sub_action_id = np.ravel_multi_index((r, c, move_id_r, move_id_c, direction_index, idx), self.actions[ActionUnload])
-                                    action_id = self.action_start_ids[ActionUnload] + sub_action_id
-                                    valid_actions[action_id] = unload_action
+                        if unload_action.validate(current_state):
+                            sub_action_id = ravel_multi_index((r, c, move_id_r, move_id_c, direction_index, idx), self.actions[ActionUnload])
+                            action_id = self.action_start_ids[ActionUnload] + sub_action_id
+                            valid_actions[action_id] = unload_action
 
         for position, property in current_state.get_all_properties(owner=current_player).items(): 
             r, c = position                  
@@ -309,7 +316,7 @@ class AWEnv_Gym(Env):
                 idx = self.unit_list.index(unit_type)
                 build_action = ActionBuild(position, unit_type.code)
                 if build_action.validate(current_state):
-                    sub_action_id = np.ravel_multi_index((r, c, idx), self.actions[ActionBuild])
+                    sub_action_id = ravel_multi_index((r, c, idx), self.actions[ActionBuild])
                     action_id = self.action_start_ids[ActionBuild] + sub_action_id
                     valid_actions[action_id] = build_action
 
