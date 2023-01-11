@@ -29,10 +29,8 @@ class SelfplayWrapper(Wrapper):
     def step(self, action):
         observation, reward, done, info = self.env.step(action)
 
-        if done:
-            return observation, reward, done, info
-
-        observation, reward, done, info = self.play_opponent_turns(observation)
+        if not done:
+            observation, reward, done, info = self.play_opponent_turns(observation)
 
         reward = 0
         winner = self.game.state.check_winner()

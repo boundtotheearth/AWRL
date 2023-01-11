@@ -214,7 +214,7 @@ class State:
         end_id = end[0] * self.map_width + end[1]
 
         if end in self._unblocked_spaces[start]:
-            return self._terrain_movement_costs[unit.move_type][start_id][end_id]
+            return int(self._terrain_movement_costs[unit.move_type][start_id][end_id])
         else:
             return 100
     

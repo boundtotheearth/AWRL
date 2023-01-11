@@ -19,4 +19,4 @@ python train.py --total-timesteps=100000 \
 --n-eval-episodes=10 \
 --n-envs=5 \
 --n-eval-envs=5 \
---eval-freq=2048
+--eval-freq=4096

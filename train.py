@@ -70,6 +70,7 @@ if __name__ == "__main__":
     }
     # eval_env = make_vec_env(AWEnv_Gym.selfplay_env, n_envs=args.n_eval_envs, env_kwargs={'env_config': eval_env_config})
     selfplay_eval_callback = SelfplayCallback(
+        eval_env_config=eval_env_config,
         n_eval_envs=args.n_eval_envs,
         n_eval_episodes_per_opponent=args.n_eval_episodes,
         best_model_save_path=args.save_path,

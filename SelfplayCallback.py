@@ -23,9 +23,18 @@ class SelfplayCallback(EventCallback):
         selfplay_opponents = [],
         eval_env_config = {},
         n_eval_envs = 1,
-        n_eval_episodes_per_opponent = 10
+        n_eval_episodes_per_opponent = 10,
+        warn = True,
+        render = False,
+        use_masking = True,
+        callback_on_new_best = None
     ):
         super().__init__(callback_after_eval, verbose=verbose)
+
+        self.warn = warn
+        self.render = render
+        self.use_masking = use_masking
+        self.callback_on_new_best = callback_on_new_best
 
         self.eval_freq = eval_freq
         self.best_mean_reward = -np.inf
@@ -105,6 +114,7 @@ class SelfplayCallback(EventCallback):
             episode_rewards = []
             episode_lengths = []
             for opponent in self.selfplay_opponents:
+                print(f"Evaluation against {opponent} started at", datetime.now().strftime("%H:%M:%S"))
                 env_config = deepcopy(self.eval_env_config)
                 env_config['opponents'] = [opponent]
                 eval_env = make_vec_env(AWEnv_Gym.selfplay_env, n_envs=self.n_eval_envs, env_kwargs={'env_config': env_config})
@@ -124,8 +134,8 @@ class SelfplayCallback(EventCallback):
                 mean_ep_length_for_opponent, std_ep_length_for_opponent = np.mean(episode_lengths_for_opponent), np.std(episode_lengths_for_opponent)
 
                 self.logger.record("league/league_size", len(self.selfplay_opponents))
-                self.logger.record(f"league/{opponent}/episode reward", f"{mean_reward_for_opponent} +/- {std_reward_for_opponent}")
-                self.logger.record(f"league/{opponent}/episode length", f"{mean_ep_length_for_opponent} +/- {std_ep_length_for_opponent}")
+                self.logger.record(f"league/{opponent}/ep_reward", f"{mean_reward_for_opponent} +/- {std_reward_for_opponent}")
+                self.logger.record(f"league/{opponent}/ep_length", f"{mean_ep_length_for_opponent} +/- {std_ep_length_for_opponent}")
 
                 episode_rewards.extend(episode_rewards_for_opponent)
                 episode_lengths.extend(episode_lengths_for_opponent)
