@@ -323,7 +323,7 @@ class ActionDirectAttack(ActionAttack):
             self.defending_unit.change_ammo(-self.defender_ammo_used)
             self.attacking_unit.change_health(-counterattack)
             if self.attacking_unit.health <= 0:
-                self.state.remove_unit(self.unit_position)
+                self.state.remove_unit(self.destination)
                 if self.attacking_unit.can_capture and isinstance(self.attacking_unit, Property):
                     self.attacking_unit.change_capture(self.attacking_unit.owner, 20)
                 self.state.update_movement_cost()

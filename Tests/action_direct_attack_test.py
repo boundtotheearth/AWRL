@@ -51,13 +51,13 @@ def test_direct_attack_induces_counterattack(generate_test_game):
 
 # Attacker can self destruct
 def test_attacker_can_self_destruct(generate_test_game):
-    units = {(0, 0): ("INF", "O"), (0, 1): ("MGT", "B")}
-    terrain = [["PLN", "PLN"]]
+    units = {(0, 0): ("INF", "O"), (0, 2): ("MGT", "B")}
+    terrain = [["PLN", "PLN", "PLN"]]
     
     game = generate_test_game(terrain=terrain, units=units)    
 
-    attack_action = ActionDirectAttack(ActionMove(unit_position=(0, 0), offset=(0, 0)), (0, 1))
+    attack_action = ActionDirectAttack(ActionMove(unit_position=(0, 0), offset=(0, 1)), (0, 1))
     game.execute_action(attack_action)
 
-    assert game.state.get_unit((0, 1), owner='B') is not None
-    assert game.state.get_unit((0, 0), owner='O') is None
+    assert game.state.get_unit((0, 2), owner='B') is not None
+    assert game.state.get_unit((0, 1), owner='O') is None

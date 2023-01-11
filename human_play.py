@@ -15,12 +15,12 @@ from stable_baselines3.common.env_util import make_vec_env
 from sb3_contrib.common.maskable.utils import get_action_masks
 
 env_config = {
-    "map": "Maps/simple_build.json",
+    "map": "Maps/Undefined_Area.json",
     "max_episode_steps": 10000,
     "render_mode": 'text',
     "seed": None,
     "agent_player": "B",
-    "opponent_list": [AIAgent(MaskablePPO.load("ppo_simple/final_model"))]
+    "opponent_list": [RandomAgent()]
 }
 
 env = make_vec_env(AWEnv_Gym.selfplay_env, n_envs=1, env_kwargs={'env_config': env_config})
@@ -29,8 +29,7 @@ print(env.get_attr('opponents'))
 
 env.render(mode='text')
 
-model = MaskablePPO.load("Models/simple_build/best_model")
-# model = MaskablePPO.load("ppo_simple_build")
+model = MaskablePPO.load("best_model")
 # test_agent = RandomAgent()
 test_agent = AIAgent(model)
 

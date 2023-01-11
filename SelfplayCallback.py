@@ -18,7 +18,7 @@ class SelfplayCallback(EventCallback):
         best_model_save_path = None,
         deterministic = True,
         callback_after_eval = None,
-        verbose = 0,
+        verbose = 1,
         reward_threshold = 0.9,
         selfplay_opponents = [],
         eval_env_config = {},
@@ -116,7 +116,7 @@ class SelfplayCallback(EventCallback):
             for opponent in self.selfplay_opponents:
                 print(f"Evaluation against {opponent} started at", datetime.now().strftime("%H:%M:%S"))
                 env_config = deepcopy(self.eval_env_config)
-                env_config['opponents'] = [opponent]
+                env_config['opponent_list'] = [opponent]
                 eval_env = make_vec_env(AWEnv_Gym.selfplay_env, n_envs=self.n_eval_envs, env_kwargs={'env_config': env_config})
                 
                 episode_rewards_for_opponent, episode_lengths_for_opponent = evaluate_policy(

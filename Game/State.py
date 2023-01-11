@@ -147,6 +147,8 @@ class State:
             for c in range(self.map_width):
                 unit_status = "     " if unit_grid[r][c] is None else "{health}{fuel:02}{ammo:02}".format(health="-" if unit_grid[r][c][1].health > 90 else unit_grid[r][c][1].get_display_health(), fuel=unit_grid[r][c][1].fuel, ammo=unit_grid[r][c][1].ammo)
                 unit_status_line.append(unit_status)
+                if unit_grid[r][c] is not None and unit_grid[r][c][1].get_display_health() == 0:
+                    raise Exception(f"OOPS unit: {unit_grid[r][c][1]}, owner: {unit_grid[r][c][0]}, health: {unit_grid[r][c][1].health}")
             map_lines.append("|{}|".format("|".join(unit_status_line)))
 
             terrain_line = []

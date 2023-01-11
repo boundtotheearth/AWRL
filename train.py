@@ -65,8 +65,7 @@ if __name__ == "__main__":
         "max_episode_steps": args.max_eval_steps,
         "render_mode": None,
         "seed": None,
-        'agent_player': 'random',
-        'opponent_list': current_opponents
+        'agent_player': 'random'
     }
     # eval_env = make_vec_env(AWEnv_Gym.selfplay_env, n_envs=args.n_eval_envs, env_kwargs={'env_config': eval_env_config})
     selfplay_eval_callback = SelfplayCallback(
