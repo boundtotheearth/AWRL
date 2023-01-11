@@ -14,11 +14,11 @@ class Unit:
         self.fuel = self.max_fuel
         self.daily_fuel = 0 
         self.vision = 0
-        self.range = []
+        self.range = set()
         self.move_type = MoveType.FOOT
         self.cost = 0
         self.load_capacity = 0
-        self.loadables = []
+        self.loadables = set()
         self.in_load = []
         self.attack_table = {}
         self.can_capture = False
@@ -116,7 +116,7 @@ class UnitInfantry(Unit):
         self.max_fuel = 99
         self.daily_fuel = 0
         self.vision = 2
-        self.range = [1]
+        self.range = {1}
         self.move_type = MoveType.FOOT
         self.cost = 1000
         self.can_capture = True
@@ -147,7 +147,7 @@ class UnitMech(Unit):
         self.max_fuel = 70
         self.daily_fuel = 0
         self.vision = 2
-        self.range = [1]
+        self.range = {1}
         self.move_type = MoveType.BOOT
         self.cost = 3000
         self.can_capture = True
@@ -178,7 +178,7 @@ class UnitRecon(Unit):
         self.max_fuel = 80
         self.daily_fuel = 0
         self.vision = 5
-        self.range = [1]
+        self.range = {1}
         self.move_type = MoveType.TIRES
         self.cost = 4000
         self.attack_table = {
@@ -209,14 +209,14 @@ class UnitTransportCopter(Unit):
         self.max_fuel = 99
         self.daily_fuel = 2
         self.vision = 2
-        self.range = [0]
+        self.range = {0}
         self.move_type = MoveType.AIR
         self.cost = 5000
         self.load_capacity = 1
-        self.loadables = [
+        self.loadables = {
             UnitInfantry,
             UnitMech
-        ]
+        }
 
 class UnitAPC(Unit):
     code = "APC"
@@ -227,16 +227,16 @@ class UnitAPC(Unit):
         self.max_fuel = 70
         self.daily_fuel = 0
         self.vision = 1
-        self.range = [0]
+        self.range = {0}
         self.move_type = MoveType.THREADS
         self.cost = 5000
         self.load_capacity = 1
         self.can_repair = True
         self.repair_amount = 0 # Can only resupply
-        self.loadables = [
+        self.loadables = {
             UnitInfantry,
             UnitMech
-        ]
+        }
 
 class UnitArtillery(Unit):
     code = "ATY"
@@ -247,7 +247,7 @@ class UnitArtillery(Unit):
         self.max_fuel = 50
         self.daily_fuel = 0
         self.vision = 1
-        self.range = [2,3]
+        self.range = {2,3}
         self.move_type = MoveType.THREADS
         self.cost = 6000
         self.attack_table = {
@@ -281,7 +281,7 @@ class UnitTank(Unit):
         self.max_fuel = 70
         self.daily_fuel = 0
         self.vision = 3
-        self.range = [1]
+        self.range = {1}
         self.move_type = MoveType.THREADS
         self.cost = 7000
         self.attack_table = {
@@ -317,16 +317,16 @@ class UnitBlackBoat(Unit):
         self.max_fuel = 50
         self.daily_fuel = 1
         self.vision = 1
-        self.range = [0]
+        self.range = {0}
         self.move_type = MoveType.LANDER
         self.cost = 7500
         self.load_capacity = 2
         self.can_repair = True
         self.repair_amount = 1
-        self.loadables = [
+        self.loadables = {
             UnitInfantry,
             UnitMech
-        ]
+        }
     
 class UnitAntiAir(Unit):
     code = "AAR"
@@ -337,7 +337,7 @@ class UnitAntiAir(Unit):
         self.max_fuel = 60
         self.daily_fuel = 0
         self.vision = 2
-        self.range = [1]
+        self.range = {1}
         self.move_type = MoveType.THREADS
         self.cost = 8000
         self.attack_table = {
@@ -371,7 +371,7 @@ class UnitBattleCopter(Unit):
         self.max_fuel = 99
         self.daily_fuel = 2
         self.vision = 3
-        self.range = [1]
+        self.range = {1}
         self.move_type = MoveType.AIR
         self.cost = 9000
         self.attack_table = {
@@ -407,7 +407,7 @@ class UnitMissile(Unit):
         self.max_fuel = 50
         self.daily_fuel = 0
         self.vision = 5
-        self.range = [3,4,5]
+        self.range = {3,4,5}
         self.move_type = MoveType.TIRES
         self.cost = 12000
         self.attack_table = {
@@ -428,7 +428,7 @@ class UnitRocket(Unit):
         self.max_fuel = 50
         self.daily_fuel = 0
         self.vision = 1
-        self.range = [3,4,5]
+        self.range = {3,4,5}
         self.move_type = MoveType.TIRES
         self.cost = 15000
         self.attack_table = {
@@ -462,7 +462,7 @@ class UnitMediumTank(Unit):
         self.max_fuel = 50
         self.daily_fuel = 0
         self.vision = 1
-        self.range = [1]
+        self.range = {1}
         self.move_type = MoveType.THREADS
         self.cost = 16000
         self.attack_table = {
@@ -498,14 +498,14 @@ class UnitCruiser(Unit):
         self.max_fuel = 99
         self.daily_fuel = 1
         self.vision = 3
-        self.range = [1]
+        self.range = {1}
         self.move_type = MoveType.SEA
         self.cost = 18000
         self.load_capacity = 2
-        self.loadables = [
+        self.loadables = {
             UnitTransportCopter,
             UnitBattleCopter
-        ]
+        }
         self.attack_table = {
             UnitBattleCopter: (115, 0),
             UnitBlackBoat: (25, 1),
@@ -527,7 +527,7 @@ class UnitFighter(Unit):
         self.max_fuel = 99
         self.daily_fuel = 5
         self.vision = 2
-        self.range = [1]
+        self.range = {1}
         self.move_type = MoveType.AIR
         self.cost = 20000
         self.attack_table = {
@@ -548,7 +548,7 @@ class UnitPiperunner(Unit):
         self.max_fuel = 99
         self.daily_fuel = 0
         self.vision = 4
-        self.range = [2,3,4,5]
+        self.range = {2,3,4,5}
         self.move_type = MoveType.PIPE
         self.cost = 20000
         self.attack_table = {
@@ -588,7 +588,7 @@ class UnitSubmarine(Unit):
         self.max_fuel = 60
         self.daily_fuel = 1
         self.vision = 5
-        self.range = [1]
+        self.range = {1}
         self.move_type = MoveType.SEA
         self.cost = 20000
         self.attack_table = {
@@ -609,7 +609,7 @@ class UnitNeotank(Unit):
         self.max_fuel = 99
         self.daily_fuel = 0
         self.vision = 1
-        self.range = [1]
+        self.range = {1}
         self.move_type = MoveType.THREADS
         self.cost = 22000
         self.attack_table = {
@@ -645,7 +645,7 @@ class UnitBomber(Unit):
         self.max_fuel = 99
         self.daily_fuel = 5
         self.vision = 2
-        self.range = [1]
+        self.range = {1}
         self.move_type = MoveType.AIR
         self.cost = 22000
         self.attack_table = {
@@ -679,7 +679,7 @@ class UnitStealth(Unit):
         self.max_fuel = 60
         self.daily_fuel = 5
         self.vision = 4
-        self.range = [1]
+        self.range = {1}
         self.move_type = MoveType.AIR
         self.cost = 24000
         self.attack_table = {
@@ -719,7 +719,7 @@ class UnitBlackBomb(Unit):
         self.max_fuel = 45
         self.daily_fuel = 5
         self.vision = 1
-        self.range = [0]
+        self.range = {0}
         self.move_type = MoveType.AIR
         self.cost = 25000
         
@@ -732,7 +732,7 @@ class UnitBattleship(Unit):
         self.max_fuel = 99
         self.daily_fuel = 1
         self.vision = 2
-        self.range = [2,3,4,5,6]
+        self.range = {2,3,4,5,6}
         self.move_type = MoveType.SEA
         self.cost = 28000
         self.attack_table = {
@@ -766,7 +766,7 @@ class UnitMegatank(Unit):
         self.max_fuel = 50
         self.daily_fuel = 0
         self.vision = 1
-        self.range = [1]
+        self.range = {1}
         self.move_type = MoveType.THREADS
         self.cost = 28000
         self.attack_table = {
@@ -802,18 +802,18 @@ class UnitCarrier(Unit):
         self.max_fuel = 99
         self.daily_fuel = 1
         self.vision = 4
-        self.range = [3,4,5,6,7,8]
+        self.range = {3,4,5,6,7,8}
         self.move_type = MoveType.SEA
         self.cost = 30000
         self.load_capacity = 2
-        self.loadables = [
+        self.loadables = {
             UnitTransportCopter,
             UnitBattleCopter,
             UnitFighter,
             UnitBomber,
             UnitBlackBomb,
             UnitStealth
-        ]
+        }
         self.attack_table = {
             UnitBattleCopter: (115, 1),
             UnitBlackBomb: (120, 1),
@@ -832,11 +832,11 @@ class UnitLander(Unit):
         self.max_fuel = 99
         self.daily_fuel = 1
         self.vision = 1
-        self.range = [0]
+        self.range = {0}
         self.move_type = MoveType.LANDER
         self.cost = 12000
         self.load_capacity = 2
-        self.loadables = [
+        self.loadables = {
             UnitInfantry,
             UnitMech,
             UnitAntiAir,
@@ -850,7 +850,7 @@ class UnitLander(Unit):
             UnitMediumTank,
             UnitNeotank,
             UnitMegatank,
-        ]
+        }
 
 standard_units = [
     UnitInfantry,

@@ -174,7 +174,7 @@ class State:
     
     def update_movement_cost(self):
         current_player = self.get_current_player()
-        occupied = set([position for position, unit in self.get_all_units().items() if unit.owner != current_player])
+        occupied = {position for position, unit in self.get_all_units().items() if unit.owner != current_player}
             
         self._unblocked_spaces = {}
         for position, unit in self.get_all_units(owner=current_player).items():

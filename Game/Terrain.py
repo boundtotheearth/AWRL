@@ -190,7 +190,7 @@ class TerrainHeadquarters(Property):
 
 class TerrainBase(Property):
     code=".BS"
-    buildables = [
+    buildables = {
         UnitInfantry,
         UnitMech,
         UnitAntiAir,
@@ -205,17 +205,17 @@ class TerrainBase(Property):
         UnitNeotank,
         UnitMegatank,
         UnitPiperunner
-    ]
+    }
 class TerrainAirport(Property):
     code=".AP"
-    buildables = [
+    buildables = {
         UnitTransportCopter,
         UnitBattleCopter,
         UnitFighter,
         UnitBomber,
         UnitBlackBomb,
         UnitStealth
-    ]
+    }
 class TerrainPort(Property):
     code=".PO"
     costs={
@@ -228,13 +228,13 @@ class TerrainPort(Property):
         MoveType.AIR:1,
         MoveType.PIPE:0
     }
-    buildables = [
+    buildables = {
         UnitLander,
         UnitBlackBoat,
         UnitCruiser,
         UnitBattleship,
         UnitCarrier,
-    ]
+    }
 class TerrainLab(Property):
     code=".LB"
 class TerrainCommTower(Property):

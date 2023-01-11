@@ -232,12 +232,11 @@ class AWEnv_Gym(Env):
         possible_directions = self.possible_directions
         
         for position, unit in all_units.items():
-            if unit.owner != current_player:
+            if unit.owner != current_player or not unit.available:
                 continue
 
             r, c = position
-            if not unit.available:
-                continue
+
             #Indirect Attack
             if 1 not in unit.range:
                 for attack_position_r, attack_position_c in enemy_units:
