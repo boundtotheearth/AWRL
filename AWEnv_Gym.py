@@ -62,7 +62,7 @@ class AWEnv_Gym(Env):
         self.env_config = env_config
 
         self.map = env_config.get('map')
-        self.game = self.generate_game(self.map)
+        self.game = env_config.get('game') or self.generate_game(self.map)
         self.seed(env_config.get('seed', 0))
 
         self.player_list = self.game.get_players_list()
@@ -198,20 +198,31 @@ class AWEnv_Gym(Env):
 
         if self.render_mode is not None:
             self.render(self.render_mode)
+            print(self.game.state.get_player_stats(self.game.get_current_player()))
 
         self.update_valid_actions()
     
         observation = self.game.get_observation(self.game.get_current_player())
 
-        reward = 0
-        if winner is self.game.get_current_player():
-            reward = 1
-        elif winner is not None:
-            reward = -1
+        reward = self.calculate_reward(winner)
         done = winner is not None
         info = {}
 
         return observation, reward, done, info
+    
+    def calculate_reward(self, winner):
+        current_player = self.game.get_current_player()
+        reward = 0
+        if winner is current_player:
+            reward += 1
+        elif winner is not None:
+            reward -= 1
+        
+        # player_stats = self.game.state.get_player_stats(current_player)
+        # reward += player_stats['unit_count']
+        # reward += player_stats['army_value']
+        # reward += player_stats['income']
+        return reward
 
     def action_masks(self):
         self.action_mask.fill(False)
@@ -323,7 +334,7 @@ class AWEnv_Gym(Env):
         self._valid_actions = valid_actions 
 
     def reset(self, seed=0, return_info=False, options=None):
-        self.game = self.generate_game(self.map)
+        self.game = self.env_config.get('game') or self.generate_game(self.map)
         current_player = self.game.get_current_player()
 
         self.update_valid_actions()

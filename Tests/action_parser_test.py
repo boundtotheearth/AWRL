@@ -119,7 +119,7 @@ def test_parse_build(generate_test_game):
 def test_parse_repair(generate_test_game):
     test_command = "repair 0,0 0,0 0,1"
 
-    terrain = [["PLN", "PLN"]]
+    terrain = [["SEA", "PLN"]]
     units = {(0, 0): ("BLB", "O"), (0, 1): ("INF", "O")}
 
     game = generate_test_game(terrain=terrain, units=units)

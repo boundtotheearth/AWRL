@@ -109,6 +109,7 @@ awbw_terrain_id_code_map = {
     45: "BAP",
     46: "BPT",
     47: "BHQ",
+    112: "WOD"
 }
 def awbw_terrain_id_to_code(awbw_terrain_id):
     return awbw_terrain_id_code_map[int(awbw_terrain_id)]

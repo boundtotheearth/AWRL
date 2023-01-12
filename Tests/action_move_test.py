@@ -62,6 +62,21 @@ def test_cannot_move_to_untraversable_terrain(generate_test_game):
     with pytest.raises(Exception):
         game.execute_action(move_action)
 
+# Cannot move with untraverasable terrain and blocked
+def test_cannot_move_with_untraversable_terrain_and_blocked(generate_test_game):
+    units = {(0, 0): ("REC", 'O'), (1, 0): ("TNK", "B")}
+    terrain = [["PLN", "MTN"],
+                ["PLN", "PLN"]]
+    
+    game = generate_test_game(terrain=terrain, units=units)
+    
+    move_action = ActionMoveCombineLoad(ActionMove(unit_position=(0, 0), offset=(1, 1)))
+    # print(game.state._terrain_adjacency_matrix)
+    # print(game.state._terrain_movement_costs)
+    # print(game.state._unblocked_spaces[(0, 0)])
+    with pytest.raises(Exception):
+        game.execute_action(move_action)
+
 # Cannot move through enemy unit
 def test_cannot_move_through_enemy_unit(generate_test_game):
     units = {(0, 0): ("INF", "O"), (0, 1): ("INF", "B")}

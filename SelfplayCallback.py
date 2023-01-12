@@ -24,6 +24,7 @@ class SelfplayCallback(EventCallback):
         eval_env_config = {},
         n_eval_envs = 1,
         n_eval_episodes_per_opponent = 10,
+        monitor_dir=None,
         warn = True,
         render = False,
         use_masking = True,
@@ -35,6 +36,7 @@ class SelfplayCallback(EventCallback):
         self.render = render
         self.use_masking = use_masking
         self.callback_on_new_best = callback_on_new_best
+        self.monitor_dir = monitor_dir
 
         self.eval_freq = eval_freq
         self.best_mean_reward = -np.inf
@@ -117,7 +119,12 @@ class SelfplayCallback(EventCallback):
                 print(f"Evaluation against {opponent} started at", datetime.now().strftime("%H:%M:%S"))
                 env_config = deepcopy(self.eval_env_config)
                 env_config['opponent_list'] = [opponent]
-                eval_env = make_vec_env(AWEnv_Gym.selfplay_env, n_envs=self.n_eval_envs, env_kwargs={'env_config': env_config})
+                eval_env = make_vec_env(
+                    env_id=AWEnv_Gym.selfplay_env,
+                    n_envs=self.n_eval_envs,
+                    env_kwargs={'env_config': env_config},
+                    monitor_dir=self.monitor_dir
+                )
                 
                 episode_rewards_for_opponent, episode_lengths_for_opponent = evaluate_policy(
                     self.model,

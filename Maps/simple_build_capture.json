@@ -1,0 +1,18 @@
+{
+    "terrain": [
+        ["NBS", "NCT", "PLN", "PLN", "PLN", "NCT"],
+        ["NCT", "OHQ", "PLN", "PLN", "PLN", "PLN"],
+        ["PLN", "PLN", "WOD", "WOD", "PLN", "PLN"],
+        ["PLN", "PLN", "WOD", "WOD", "PLN", "PLN"],
+        ["PLN", "PLN", "PLN", "PLN", "BHQ", "NCT"],
+        ["NCT", "PLN", "PLN", "PLN", "NCT", "NBS"]
+    ],
+    "units": {
+        "O": [
+            {"row": 1, "col": 1, "code": "INF"}
+        ],
+        "B": [
+            {"row": 4, "col": 4, "code": "INF"}
+        ]
+    }
+}

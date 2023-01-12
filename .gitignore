@@ -5,6 +5,7 @@ bot.config
 Models/
 ppo_simple/
 *.zip
+Monitor/
 
 # Profiling
 *.prof

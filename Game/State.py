@@ -21,12 +21,13 @@ class State:
 
         self.players = list(self.co.keys())
 
-        self.funds = funds or {player: 0 for player in self.players}
-
         self.current_player = first_player
+        
         self.current_day = 1
 
         self.properties = {(r, c): self.terrain[r][c] for r in range(self.map_height) for c in range(self.map_width) if isinstance(self.terrain[r][c], Property)}
+
+        self.funds = funds or {player: 1000 * len(self.get_all_properties(player)) if player == self.get_current_player() else 0 for player in self.players}
 
         self.unit_built = {player: len(self.get_all_units(owner=player)) > 0 for player in self.players}
         self.has_hq = {player: any([isinstance(property, TerrainHeadquarters) for property in self.get_all_properties(owner=player).values()]) for player in self.players}
@@ -129,6 +130,19 @@ class State:
         
         return remaining_players.pop() if len(remaining_players) == 1 else None
     
+    def get_player_stats(self, player):
+        stats = {}
+        player_units = self.get_all_units(player)
+        # Unit count
+        stats['unit_count'] = len(player_units)
+        # Army value
+        stats['army_value'] = sum([unit.cost * unit.get_display_health() / 10 for unit in player_units.values()])
+        # Income
+        stats['income'] = len(self.get_all_properties(player)) * 1000
+        # Funds
+        stats['funds'] = self.funds[player]
+        return stats
+    
     def text_display(self):
         unit_grid  = [[None for _ in range(self.map_width)] for _ in range(self.map_height)]
 
@@ -188,8 +202,9 @@ class State:
         pending = [start]
         while len(pending) > 0:
             current = pending.pop()
+            terrain = self.terrain[current[0]][current[1]]
             
-            if current in visited or current in occupied:
+            if current in visited or current in occupied or terrain.get_move_cost(unit.move_type) == 0:
                 continue
             visited.add(current)
 

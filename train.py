@@ -58,7 +58,12 @@ if __name__ == "__main__":
         'agent_player': 'random',
         'opponent_list': current_opponents
     }
-    env = make_vec_env(AWEnv_Gym.selfplay_env, n_envs=args.n_envs, env_kwargs={'env_config': env_config})
+    env = make_vec_env(
+        env_id=AWEnv_Gym.selfplay_env,
+        n_envs=args.n_envs,
+        monitor_dir="Train_Monitor",
+        env_kwargs={'env_config': env_config}
+    )
 
     eval_env_config = {
         "map": args.map_name,
@@ -73,9 +78,10 @@ if __name__ == "__main__":
         n_eval_envs=args.n_eval_envs,
         n_eval_episodes_per_opponent=args.n_eval_episodes,
         best_model_save_path=args.save_path,
+        monitor_dir="Eval_Monitor",
         eval_freq=args.eval_freq,
         reward_threshold=args.reward_threshold,
-        selfplay_opponents=current_opponents
+        selfplay_opponents=current_opponents,
     )
 
     policy_kwargs = dict(

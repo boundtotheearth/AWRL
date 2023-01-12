@@ -20,12 +20,11 @@ env_config = {
     "render_mode": 'text',
     "seed": None,
     "agent_player": "B",
-    "opponent_list": [RandomAgent()]
+    "opponent_list": [HumanAgent()]
 }
 
 env = make_vec_env(AWEnv_Gym.selfplay_env, n_envs=1, env_kwargs={'env_config': env_config})
 observation = env.reset()
-print(env.get_attr('opponents'))
 
 env.render(mode='text')
 

@@ -33,7 +33,7 @@ def test_can_multiple_units(generate_test_game, unit_library):
     
     units = {(0, 1): test_unit}
     
-    terrain = [["PLN", "PLN", "PLN"]]
+    terrain = [["PLN", "SHL", "PLN"]]
     
     game = generate_test_game(terrain=terrain, units=units)
     
