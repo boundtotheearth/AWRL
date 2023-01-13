@@ -1,5 +1,6 @@
 import random
-from Game.Unit import UnitInfantry, UnitMech, UnitRecon, UnitTransportCopter, UnitAPC, UnitArtillery, UnitTank, UnitBlackBoat, UnitAntiAir, UnitBattleCopter, UnitMissile, UnitLander, UnitRocket, UnitMediumTank, UnitCruiser, UnitFighter, UnitPiperunner, UnitSubmarine, UnitNeotank, UnitBomber, UnitStealth, UnitBlackBomb, UnitBattleship, UnitMegatank, UnitCarrier
+from copy import deepcopy
+from Game.Unit import standard_units
 
 class COLibrary:
     def __init__(self, available_co):
@@ -8,7 +9,7 @@ class COLibrary:
 
     def create(self, co_name):
         if co_name not in self._code_to_cls:
-            raise Exception("{co_name} is not an available CO".format(co_name=co_name))
+            raise Exception(f"{co_name} is not an available CO")
         
         co_type = self._code_to_cls[co_name]
         return co_type()
@@ -22,33 +23,17 @@ class COLibrary:
 class BaseCO:
     name = "None"
     def __init__(self):
-        self.modifiers = {
-            UnitAntiAir: (100, 100),
-            UnitAPC: (100, 100),
-            UnitArtillery: (100, 100),
-            UnitBattleCopter: (100, 100),
-            UnitBattleship: (100, 100),
-            UnitBlackBoat: (100, 100),
-            UnitBlackBomb: (100, 100),
-            UnitBomber: (100, 100),
-            UnitCarrier: (100, 100),
-            UnitCruiser: (100, 100),
-            UnitFighter: (100, 100),
-            UnitInfantry: (100, 100),
-            UnitLander: (100, 100),
-            UnitMediumTank: (100, 100),
-            UnitMech: (100, 100),
-            UnitMegatank: (100, 100),
-            UnitMissile: (100, 100),
-            UnitNeotank: (100, 100),
-            UnitPiperunner: (100, 100),
-            UnitRecon: (100, 100),
-            UnitRocket: (100, 100),
-            UnitStealth: (100, 100),
-            UnitSubmarine: (100, 100),
-            UnitTransportCopter: (100, 100),
-            UnitTank: (100, 100)
-        }
+        self.player = None
+        self.cop_applied = False
+        self.scop_applied = False
+        self.cop_amount = 0
+        self.scop_amount = 0
+        self.power = 0
+        self.modifiers = { unit: (100, 100) for unit in standard_units }
+        self.original_modifiers = deepcopy(self.modifiers)
+
+    def set_player(self, player):
+        self.player = player
 
     def get_attack_modifier(self, unit_type):
         return self.modifiers.get(unit_type, (0, 0))[0]
@@ -59,6 +44,74 @@ class BaseCO:
     def get_luck_roll(self):
         return random.randint(0, 9)
 
+    def charge_power(self, amount):
+        if self.cop_applied or self.scop_applied:
+            return
+        self.power = max(0, min(self.scop_amount, self.power + amount))
+
+    def apply_cop(self, state):
+        for unit in self.modifiers:
+            original_modifier = self.modifiers[unit]
+            new_modifier = (original_modifier[0] + 10, original_modifier[1] + 10)
+            self.modifiers[unit] = new_modifier
+
+        self.cop_applied = True
+        self.power = 0
+
+    def apply_scop(self, state):
+        for unit in self.modifiers:
+            original_modifier = self.modifiers[unit]
+            new_modifier = (original_modifier[0] + 10, original_modifier[1] + 10)
+            self.modifiers[unit] = new_modifier
+        
+        self.scop_applied = True
+        self.power
+
+    def reset_cop(self, state):
+        self.modifiers = deepcopy(self.original_modifiers)
+        self.cop_applied = False
+
+    def reset_scop(self, state):
+        self.modifiers = deepcopy(self.original_modifiers)
+        self.scop_applied = False
+
+class COAdder(BaseCO):
+    name = "Adder"
+
+    def get_attack_modifier(self, unit_type):
+        return self.modifiers.get(unit_type, (0, 0))[0]
+    
+    def get_defence_modifier(self, unit_type):
+        return self.modifiers.get(unit_type, (0, 0))[1]
+
+    def get_luck_roll(self):
+        return random.randint(0, 9)
+
+    def apply_cop(self, state):
+        for unit in state.get_all_units(owner=self.player).values():
+            unit.move += 1
+        
+        super().apply_cop(state)
+
+    def apply_scop(self, state):
+        for unit in state.get_all_units(owner=self.player).values():
+            unit.move += 2
+
+        super().apply_scop(state)
+
+    def reset_cop(self, state):
+        for unit in state.get_all_units(owner=self.player).values():
+            unit.move -= 1
+
+        super().reset_scop(state)
+
+    def reset_scop(self, state):
+        for unit in state.get_all_units(owner=self.player).values():
+            unit.move -= 2
+
+        super().reset_scop(state)
+
 all_co = [
-    BaseCO
+    BaseCO,
+    COAdder
 ]

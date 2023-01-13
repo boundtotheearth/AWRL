@@ -1,6 +1,8 @@
 import argparse
 import os
 from datetime import datetime
+from copy import deepcopy
+import numpy as np
 
 from Game.Game import Game
 from Game.CO import BaseCO
@@ -12,6 +14,7 @@ from util import linear_schedule
 from stable_baselines3.common.env_util import make_vec_env
 
 from sb3_contrib import MaskablePPO
+from sb3_contrib.common.maskable.evaluation import evaluate_policy
 
 from CustomModel import CustomFeatureExtractor
 
@@ -24,7 +27,7 @@ if __name__ == "__main__":
     parser.add_argument("--map-name", type=str, default=None)
     parser.add_argument("--from-checkpoint", type=str, default=None)
     parser.add_argument("--load-opponents", type=str, default=None)
-    parser.add_argument("--total-timesteps", type=int, default=100000)
+    parser.add_argument("--n-iters", type=int, default=100)
     parser.add_argument("--n-steps", type=int, default=128)
     parser.add_argument("--batch-size", type=int, default=64)
     parser.add_argument("--n-eval-episodes", type=int, default=200)
@@ -84,11 +87,13 @@ if __name__ == "__main__":
         selfplay_opponents=current_opponents,
     )
 
+    # Defined custom CNN feature extractor
     policy_kwargs = dict(
         features_extractor_class=CustomFeatureExtractor,
         features_extractor_kwargs=dict(features_dim=128),
     )
 
+    # Initialize model
     if args.from_checkpoint:
         print("Loading from checkpoint")
         model = MaskablePPO.load(
@@ -112,10 +117,81 @@ if __name__ == "__main__":
             policy_kwargs=policy_kwargs
         )
 
-    obs = env.reset()
+    env.reset()
     print("Training started at", datetime.now().strftime("%H:%M:%S"))
-    model.learn(total_timesteps=args.total_timesteps, callback=selfplay_eval_callback, progress_bar=True)
+    for iter in range(1, args.n_iters + 1):
+        print(f"Iteration {iter} started at", datetime.now().strftime("%H:%M:%S"))
 
+        model.learn(total_timesteps=args.n_steps * args.n_envs, reset_num_timesteps=False, progress_bar=True)
+
+        model_save_path = os.path.join(args.save_path, "current_model")
+        model.save(model_save_path)
+
+        model.logger.dump()
+        
+        if iter % args.eval_freq == 0:
+            print("Evaluation started at", datetime.now().strftime("%H:%M:%S"))
+
+            model.logger.record("league/league_size", len(current_opponents))
+
+            episode_rewards = []
+            episode_lengths = []
+            skip_eval = False
+            for opponent in current_opponents:
+                if skip_eval:
+                    model.logger.record(f"league/{opponent}/ep_reward", "Skipped")
+                    model.logger.record(f"league/{opponent}/ep_length", "Skipped")
+                    continue
+
+                print(f"Evaluation against {opponent} started at", datetime.now().strftime("%H:%M:%S"))
+                env_config = deepcopy(eval_env_config)
+                env_config['opponent_list'] = [opponent]
+                eval_env = make_vec_env(
+                    env_id=AWEnv_Gym.selfplay_env,
+                    n_envs=args.n_eval_envs,
+                    env_kwargs={'env_config': env_config},
+                    monitor_dir="Eval_Monitor"
+                )
+                
+                episode_rewards_for_opponent, episode_lengths_for_opponent = evaluate_policy(
+                    model,
+                    eval_env,
+                    n_eval_episodes=args.n_eval_episodes,
+                    deterministic=True,
+                    return_episode_rewards=True,
+                )
+                mean_reward_for_opponent, std_reward_for_opponent = np.mean(episode_rewards_for_opponent), np.std(episode_rewards_for_opponent)
+                mean_ep_length_for_opponent, std_ep_length_for_opponent = np.mean(episode_lengths_for_opponent), np.std(episode_lengths_for_opponent)
+                
+                model.logger.record(f"league/{opponent}/ep_reward", f"{mean_reward_for_opponent} +/- {std_reward_for_opponent}")
+                model.logger.record(f"league/{opponent}/ep_length", f"{mean_ep_length_for_opponent} +/- {std_ep_length_for_opponent}")
+
+                episode_rewards.extend(episode_rewards_for_opponent)
+                episode_lengths.extend(episode_lengths_for_opponent)
+
+                if mean_reward_for_opponent < args.reward_threshold / 2:
+                    print("Model is doing very poorly. Skipping evaluation to continue training...")
+                    skip_eval = True
+
+            mean_reward, std_reward = np.mean(episode_rewards), np.std(episode_rewards)
+            mean_ep_length, std_ep_length = np.mean(episode_lengths), np.std(episode_lengths)
+
+            model.logger.record("eval/mean_reward", float(mean_reward))
+            model.logger.record("eval/mean_ep_length", mean_ep_length)
+            
+            if mean_reward > args.reward_threshold:
+                print("Exceeded reward threshold! Adding a new opponent!")
+                new_model_id = len(current_opponents)
+                new_model_name = f"model_{new_model_id}"
+                model.save(os.path.join(args.load_opponents, new_model_name))
+                new_model = MaskablePPO.load(os.path.join(args.load_opponents, new_model_name))
+                current_opponents.append(AIAgent(new_model, name=new_model_name, deterministic=True))
+                best_mean_reward = -np.inf
+                
+            model.logger.dump()
+            print("Evaluation completed at", datetime.now().strftime("%H:%M:%S"))
+
+    print("Training done. Saving model...")
     final_save_path = os.path.join(args.save_path, "final_model")
     model.save(final_save_path)
-    print(f"TRAINING DONE. Final model saved to {final_save_path}")
+    print(f"Final model saved to {final_save_path}")

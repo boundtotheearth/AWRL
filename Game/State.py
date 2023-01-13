@@ -11,6 +11,9 @@ A data class
 class State:
     def __init__(self, co=None, terrain=[[]], units={}, funds=None, first_player=0):
         self.co = co
+        for player, co in self.co.items():
+            co.set_player(player)
+
         self.terrain = terrain
         self.unit_library = UnitLibrary(standard_units)
 
@@ -118,6 +121,9 @@ class State:
     def set_terrain(self, terrain, position):
         self.terrain[position[0]][position[1]] = terrain
 
+    def get_co(self, player):
+        return self.co.get(player)
+
     def check_winner(self):
         remaining_players = set(self.players)
         for player in self.players:
@@ -154,7 +160,7 @@ class State:
         top_number_line = []
         for c in range(self.map_width):
             top_number_line.append(f"  {c}  ")
-        map_lines.append("  |{}|".format(" ".join(top_number_line)))
+        map_lines.append("   {} ".format(" ".join(top_number_line)))
 
         for r in range(self.map_height):
             unit_line = []

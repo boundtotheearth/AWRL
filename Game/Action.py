@@ -50,6 +50,7 @@ class ActionEnd(Action):
         self.daily_income(next_player)
         self.daily_unit_reset(next_player)
         self.daily_unit_repair_resupply(next_player)
+        self.reset_powers(next_player)
     
     def daily_fuel_consumption(self, player):
         for unit in self.state.get_all_units(player).values():
@@ -99,6 +100,13 @@ class ActionEnd(Action):
                     self.state.funds[player] -= cost
                     unit.change_health(repair_amount * 10)
     
+    def reset_powers(self, player):
+        co = self.state.get_co(player)
+        if co.cop_applied:
+            co.reset_cop(self.state)
+        if co.scop_applied:
+            co.reset_scop(self.state)
+
     def __str__(self) -> str:
         return "End Turn"
 
@@ -285,7 +293,14 @@ class ActionAttack(Action):
         damage = calculate_damage(self.attacking_co, self.attacking_unit, self.defending_co, self.defending_unit, self.defending_terrain)
         
         self.attacking_unit.change_ammo(-self.attacker_ammo_used)
+        original_health = self.defending_unit.get_display_health()
         self.defending_unit.change_health(-damage)
+
+        health_loss = self.defending_unit.get_display_health() - original_health
+        self.value_inflicted = (health_loss / 10) * self.defending_unit.cost
+        self.defending_co.charge_power(self.value_inflicted)
+        self.attacking_co.charge_power(0.5 * self.value_inflicted)
+
         if self.defending_unit.health <= 0:
             self.state.remove_unit(self.attack_target)
             if self.defending_unit.can_capture and isinstance(self.defending_terrain, Property):
@@ -321,7 +336,14 @@ class ActionDirectAttack(ActionAttack):
         if self.can_counterattack:
             counterattack = calculate_damage(self.defending_co, self.defending_unit, self.attacking_co, self.attacking_unit, self.attacking_terrain)
             self.defending_unit.change_ammo(-self.defender_ammo_used)
+            original_health = self.attacking_unit.get_display_health()
             self.attacking_unit.change_health(-counterattack)
+
+            health_loss = self.attacking_unit.get_display_health() - original_health
+            self.counterattack_value_inflicted = (health_loss / 10) * self.attacking_unit.cost
+            self.attacking_co.charge_power(self.counterattack_value_inflicted)
+            self.defending_co.charge_power(0.5 * self.counterattack_value_inflicted)
+            
             if self.attacking_unit.health <= 0:
                 self.state.remove_unit(self.destination)
                 if self.attacking_unit.can_capture and isinstance(self.attacking_unit, Property):
@@ -567,8 +589,41 @@ class ActionUnload(Action):
         return f"{str(self.move_action)} then unloads {self.idx} at {self.unload_position}"
 
 class ActionCOP(Action):
-    pass
+    def __init__(self):
+        super().__init__()
+    
+    def validate(self, state):
+        current_player = state.get_current_player()
+        self.co = state.get_co(current_player)
+        if self.co.power < self.co.cop_amount:
+            self.invalid_message = "Not enough power for COP"
+            return False
+
+        return super().validate(state)
+
+    def execute(self):
+        super().execute()
+
+        self.co.apply_cop(self.state)
 
 class ActionSCOP(Action):
+    def __init__(self):
+        super().__init__()
+    
+    def validate(self, state):
+        current_player = state.get_current_player()
+        self.co = state.get_co(current_player)
+        if self.co.power < self.co.scop_amount:
+            self.invalid_message = "Not enough power for SCOP"
+            return False
+            
+        return super().validate(state)
+
+    def execute(self):
+        super().execute()
+
+        self.co.apply_scop(self.state)
+
+class ActionHide(Action):
     pass
         
