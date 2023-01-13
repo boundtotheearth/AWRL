@@ -115,7 +115,11 @@ class SelfplayCallback(EventCallback):
 
             episode_rewards = []
             episode_lengths = []
+            skip_eval = False
             for opponent in self.selfplay_opponents:
+                if skip_eval:
+                    self.logger.record(f"league/{opponent}", "Skipped")
+
                 print(f"Evaluation against {opponent} started at", datetime.now().strftime("%H:%M:%S"))
                 env_config = deepcopy(self.eval_env_config)
                 env_config['opponent_list'] = [opponent]
@@ -139,13 +143,16 @@ class SelfplayCallback(EventCallback):
                 )
                 mean_reward_for_opponent, std_reward_for_opponent = np.mean(episode_rewards_for_opponent), np.std(episode_rewards_for_opponent)
                 mean_ep_length_for_opponent, std_ep_length_for_opponent = np.mean(episode_lengths_for_opponent), np.std(episode_lengths_for_opponent)
-
-                self.logger.record("league/league_size", len(self.selfplay_opponents))
+                
                 self.logger.record(f"league/{opponent}/ep_reward", f"{mean_reward_for_opponent} +/- {std_reward_for_opponent}")
                 self.logger.record(f"league/{opponent}/ep_length", f"{mean_ep_length_for_opponent} +/- {std_ep_length_for_opponent}")
 
                 episode_rewards.extend(episode_rewards_for_opponent)
                 episode_lengths.extend(episode_lengths_for_opponent)
+
+                if mean_reward_for_opponent < self.reward_threshold / 2:
+                    print("Model is doing very poorly. Skipping evaluation to continue training...")
+                    skip_eval = True
 
             if self.log_path is not None:
                 self.evaluations_timesteps.append(self.num_timesteps)

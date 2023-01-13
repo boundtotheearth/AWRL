@@ -3,8 +3,8 @@ conda run --live-stream -n AWRL_env python train.py \
 --total-timesteps=100000 \
 --n-steps=32 \
 --n-eval-episodes=10 \
---eval-freq=256 \
---n-envs=20 \
---n-eval-envs=20 \
+--eval-freq=512 \
+--n-envs=30 \
+--n-eval-envs=10 \
 --max-steps=10000 \
 --max-eval-steps=10000

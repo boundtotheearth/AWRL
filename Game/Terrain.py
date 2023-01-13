@@ -179,6 +179,20 @@ class TerrainPipes(Terrain):
         MoveType.AIR:0,
         MoveType.PIPE:1
     }
+
+class TerrainMissileSilo(Terrain):
+    code="SIL"
+    defense=3
+    costs={
+        MoveType.FOOT:1,
+        MoveType.BOOT:1,
+        MoveType.THREADS:1,
+        MoveType.TIRES:1,
+        MoveType.SEA:0,
+        MoveType.LANDER:0,
+        MoveType.AIR:1,
+        MoveType.PIPE:0
+    }
         
 class TerrainCity(Property):
     code=".CT"
@@ -250,6 +264,7 @@ standard_terrain = [
     TerrainShoals,
     TerrainReefs,
     TerrainPipes,
+    TerrainMissileSilo,
     TerrainCity,
     TerrainHeadquarters,
     TerrainBase,

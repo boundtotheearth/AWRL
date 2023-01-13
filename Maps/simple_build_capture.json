@@ -1,11 +1,11 @@
 {
     "terrain": [
-        ["NBS", "NCT", "PLN", "PLN", "PLN", "NCT"],
-        ["NCT", "OHQ", "PLN", "PLN", "PLN", "PLN"],
-        ["PLN", "PLN", "WOD", "WOD", "PLN", "PLN"],
-        ["PLN", "PLN", "WOD", "WOD", "PLN", "PLN"],
-        ["PLN", "PLN", "PLN", "PLN", "BHQ", "NCT"],
-        ["NCT", "PLN", "PLN", "PLN", "NCT", "NBS"]
+        ["NBS", "NCT", "PLN", "PLN", "MTN", "NCT"],
+        ["NCT", "OHQ", "PLN", "PLN", "WOD", "PLN"],
+        ["MTN", "PLN", "SIL", "SIL", "PLN", "PLN"],
+        ["PLN", "PLN", "SIL", "SIL", "PLN", "MTN"],
+        ["PLN", "WOD", "PLN", "PLN", "BHQ", "NCT"],
+        ["NCT", "MTN", "PLN", "PLN", "NCT", "NBS"]
     ],
     "units": {
         "O": [

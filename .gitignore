@@ -6,6 +6,8 @@ Models/
 ppo_simple/
 *.zip
 Monitor/
+Eval_Monitor/
+Train_Monitor/
 
 # Profiling
 *.prof
