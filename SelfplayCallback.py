@@ -203,7 +203,7 @@ class SelfplayCallback(EventCallback):
                 new_model_name = f"model_{new_model_id}"
                 self.model.save(os.path.join(self.best_model_save_path, new_model_name))
                 new_model = MaskablePPO.load(os.path.join(self.best_model_save_path, f"model_{new_model_id}"))
-                self.selfplay_opponents.append(AIAgent(new_model, name=new_model_name))
+                self.selfplay_opponents.append(AIAgent(new_model, name=new_model_name, deterministic=True))
                 self.best_mean_reward = -np.inf
                 
             self.logger.dump(self.num_timesteps)

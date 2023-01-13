@@ -13,11 +13,11 @@ source activate AWRL_env
 python train.py --total-timesteps=100000 \
 --map-name="Maps/Undefined_Area.json" \
 --lr=0.00003 \
---n-steps=1024 \
+--n-steps=512 \
 --batch-size=128 \
 --max-steps=10000 \
 --max-eval-steps=10000 \
 --n-eval-episodes=10 \
---n-envs=5 \
---n-eval-envs=5 \
---eval-freq=4096
+--n-envs=10 \
+--n-eval-envs=10 \
+--eval-freq=8192

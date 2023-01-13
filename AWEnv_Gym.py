@@ -62,7 +62,8 @@ class AWEnv_Gym(Env):
         self.env_config = env_config
 
         self.map = env_config.get('map')
-        self.game = env_config.get('game') or self.generate_game(self.map)
+        strict = env_config.get('strict', True)
+        self.game = env_config.get('game') or self.generate_game(self.map, strict)
         self.seed(env_config.get('seed', 0))
 
         self.player_list = self.game.get_players_list()
@@ -109,7 +110,7 @@ class AWEnv_Gym(Env):
 
         self.update_valid_actions()
     
-    def generate_game(self, map):
+    def generate_game(self, map, strict):
         cos = {
             'O': BaseCO(),
             'B': BaseCO()
@@ -117,7 +118,8 @@ class AWEnv_Gym(Env):
         game = Game.load_map(
             map_path=map,
             players_co=cos,
-            save_history=False
+            save_history=False,
+            strict=strict
         )
         return game
 
@@ -334,7 +336,8 @@ class AWEnv_Gym(Env):
         self._valid_actions = valid_actions 
 
     def reset(self, seed=0, return_info=False, options=None):
-        self.game = self.env_config.get('game') or self.generate_game(self.map)
+        strict = self.env_config.get('strict', True)
+        self.game = self.env_config.get('game') or self.generate_game(self.map, strict)
         current_player = self.game.get_current_player()
 
         self.update_valid_actions()

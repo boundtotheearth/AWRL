@@ -7,7 +7,7 @@ import copy
 import numpy as np
 
 class Game:
-    def __init__(self, players, init_state=None, allowed_terrain=standard_terrain, allowed_units=standard_units, seed=0, save_history=True):
+    def __init__(self, players, init_state=None, allowed_terrain=standard_terrain, allowed_units=standard_units, seed=0, save_history=True, strict=True):
         self.state = init_state
         self.history = []
         self.seed = seed
@@ -17,13 +17,14 @@ class Game:
         self.map_height = self.state.map_height
         self.map_width = self.state.map_width
         self.save_history = save_history
+        self.strict = strict
 
         self.terrain_indices = {terrain_type: i for i, terrain_type in enumerate(self.get_terrain_list())}
         self.property_indices = {terrain_type: i for i, terrain_type in enumerate(self.get_property_list())}
         self.unit_indices = {unit_type: i for i, unit_type in enumerate(allowed_units)}
 
     @classmethod
-    def load_map(cls, players_co, map_path, allowed_terrain=standard_terrain, allowed_units=standard_units, seed=0, save_history=True):
+    def load_map(cls, players_co, map_path, allowed_terrain=standard_terrain, allowed_units=standard_units, seed=0, save_history=True, strict=True):
         players = list(players_co.keys())
         
         terrain_library = TerrainLibrary(players, allowed_terrain)
@@ -31,7 +32,7 @@ class Game:
 
         terrain, units = load_map(map_path, terrain_library, unit_library)
         state = State(players_co, terrain, units)
-        game = cls(players=players, init_state=state, seed=seed, save_history=save_history)
+        game = cls(players=players, init_state=state, seed=seed, save_history=save_history, strict=strict)
 
         return game
         
@@ -92,7 +93,11 @@ class Game:
         if not action.validated:
             is_valid = action.validate(self.state)
             if not is_valid:
-                raise Exception(f"{action}: {action.invalid_message}")
+                if self.strict:
+                    raise Exception(f"{action}: {action.invalid_message}")
+                else:
+                    print(f"INVALID ACTION {action}: {action.invalid_message}")
+                    return self.state.check_winner()
 
         action.execute()
 

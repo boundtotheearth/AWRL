@@ -150,12 +150,18 @@ class State:
             unit_grid[position[0]][position[1]] = (unit.owner, unit)
 
         map_lines = []
+
+        top_number_line = []
+        for c in range(self.map_width):
+            top_number_line.append(f"  {c}  ")
+        map_lines.append("  |{}|".format(" ".join(top_number_line)))
+
         for r in range(self.map_height):
             unit_line = []
             for c in range(self.map_width):
                 unit_code = "     " if unit_grid[r][c] is None else "{owner} {type_code}".format(owner=unit_grid[r][c][0], type_code=unit_grid[r][c][1])
                 unit_line.append(unit_code)
-            map_lines.append("|{}|".format("|".join(unit_line)))
+            map_lines.append("  |{}|".format("|".join(unit_line)))
 
             unit_status_line = []
             for c in range(self.map_width):
@@ -163,12 +169,12 @@ class State:
                 unit_status_line.append(unit_status)
                 if unit_grid[r][c] is not None and unit_grid[r][c][1].get_display_health() == 0:
                     raise Exception(f"OOPS unit: {unit_grid[r][c][1]}, owner: {unit_grid[r][c][0]}, health: {unit_grid[r][c][1].health}")
-            map_lines.append("|{}|".format("|".join(unit_status_line)))
+            map_lines.append("{} |{}|".format(r, "|".join(unit_status_line)))
 
             terrain_line = []
             for c in range(self.map_width):
                 terrain_line.append(" {} ".format(self.get_terrain((r, c))))
-            map_lines.append("|{}|".format("|".join(terrain_line)))
+            map_lines.append("  |{}|".format("|".join(terrain_line)))
             
         return "\n".join(map_lines)
 

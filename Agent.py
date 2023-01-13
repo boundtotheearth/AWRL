@@ -23,13 +23,14 @@ class RandomAgent(Agent):
         return "RandomAgent"
         
 class AIAgent(Agent):
-    def __init__(self, model, name="AIAgent"):
+    def __init__(self, model, name="AIAgent", deterministic=False):
         super().__init__()
         self.model = model
         self.name = name
+        self.deterministic = deterministic
 
     def get_action(self, observation, action_masks):
-        action, _state = self.model.predict(observation, action_masks=action_masks)
+        action, _state = self.model.predict(observation, action_masks=action_masks, deterministic=self.deterministic)
         return action.tolist()
 
     def __str__(self) -> str:
