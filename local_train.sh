@@ -9,3 +9,5 @@ conda run --live-stream -n AWRL_env python train.py \
 --n-eval-envs=10 \
 --max-steps=10000 \
 --max-eval-steps=10000
+--reward-threshold=100
+--agent-player="O"

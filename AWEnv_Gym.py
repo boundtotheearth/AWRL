@@ -219,12 +219,12 @@ class AWEnv_Gym(Env):
         current_player = self.game.get_current_player()
         reward = 0
         if winner is current_player:
-            reward += 1
+            reward += 100
         elif winner is not None:
-            reward -= 1
+            reward -= 100
 
         new_potential = self.calculate_potential(current_player)
-        reward += new_potential - self.prev_potential[current_player]
+        reward += (new_potential - self.prev_potential[current_player]) / 1000
 
         self.prev_potential[current_player] = new_potential
 
