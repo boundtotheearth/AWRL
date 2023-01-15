@@ -65,6 +65,7 @@ class AWEnv_Gym(Env):
         strict = env_config.get('strict', True)
         self.game = env_config.get('game') or self.generate_game(self.map, strict)
         self.seed(env_config.get('seed', 0))
+        self.gamma = env_config.get('gamma', 0.99)
 
         self.player_list = self.game.get_players_list()
         self.terrain_list = self.game.get_terrain_list()
@@ -73,6 +74,8 @@ class AWEnv_Gym(Env):
 
         self.rows = self.game.map_height
         self.cols = self.game.map_width
+
+        self.prev_potential = {player: self.calculate_potential(player) for player in self.player_list}
 
         self.max_move = 9
         self.max_attack = 8
@@ -200,7 +203,7 @@ class AWEnv_Gym(Env):
 
         if self.render_mode is not None:
             self.render(self.render_mode)
-            print(self.game.state.get_player_stats(self.game.get_current_player()))
+            print(self.game.state.get_player_stats())
 
         self.update_valid_actions()
     
@@ -219,12 +222,25 @@ class AWEnv_Gym(Env):
             reward += 1
         elif winner is not None:
             reward -= 1
-        
-        # player_stats = self.game.state.get_player_stats(current_player)
-        # reward += player_stats['unit_count']
-        # reward += player_stats['army_value']
-        # reward += player_stats['income']
+
+        new_potential = self.calculate_potential(current_player)
+        reward += new_potential - self.prev_potential[current_player]
+
+        self.prev_potential[current_player] = new_potential
+
         return reward
+        
+    def calculate_potential(self, player):
+        player_stats = self.game.state.get_player_stats()
+        potential = 0
+        for other_player, stats in player_stats.items():
+            if other_player == player:
+                potential += stats['army_value']
+                potential += stats['income']
+            else:
+                potential -= stats['army_value']
+                potential -= stats['income']
+        return potential
 
     def action_masks(self):
         self.action_mask.fill(False)

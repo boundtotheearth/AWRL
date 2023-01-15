@@ -169,9 +169,9 @@ if __name__ == "__main__":
                 episode_rewards.extend(episode_rewards_for_opponent)
                 episode_lengths.extend(episode_lengths_for_opponent)
 
-                if mean_reward_for_opponent < args.reward_threshold / 2:
-                    print("Model is doing very poorly. Skipping evaluation to continue training...")
-                    skip_eval = True
+                # if mean_reward_for_opponent < args.reward_threshold / 2:
+                #     print("Model is doing very poorly. Skipping evaluation to continue training...")
+                #     skip_eval = True
 
             mean_reward, std_reward = np.mean(episode_rewards), np.std(episode_rewards)
             mean_ep_length, std_ep_length = np.mean(episode_lengths), np.std(episode_lengths)
@@ -182,9 +182,9 @@ if __name__ == "__main__":
             if mean_reward > args.reward_threshold:
                 print("Exceeded reward threshold! Adding a new opponent!")
                 new_model_id = len(current_opponents)
-                new_model_name = f"model_{new_model_id}"
-                model.save(os.path.join(args.load_opponents, new_model_name))
-                new_model = MaskablePPO.load(os.path.join(args.load_opponents, new_model_name))
+                new_model_name = os.path.join(args.load_opponents, f"model_{new_model_id}")
+                model.save(new_model_name)
+                new_model = MaskablePPO.load(new_model_name)
                 current_opponents.append(AIAgent(new_model, name=new_model_name, deterministic=True))
                 best_mean_reward = -np.inf
                 

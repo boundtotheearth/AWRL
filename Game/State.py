@@ -136,7 +136,11 @@ class State:
         
         return remaining_players.pop() if len(remaining_players) == 1 else None
     
-    def get_player_stats(self, player):
+    def get_player_stats(self, player=None):
+        if player is None:
+            stats = {player: self.get_player_stats(player) for player in self.players}
+            return stats
+            
         stats = {}
         player_units = self.get_all_units(player)
         # Unit count

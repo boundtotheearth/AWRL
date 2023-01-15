@@ -29,17 +29,10 @@ class SelfplayWrapper(Wrapper):
     def step(self, action):
         observation, reward, done, info = self.env.step(action)
 
-        if not done:
-            observation, reward, done, info = self.play_opponent_turns(observation)
-
-        reward = 0
-        winner = self.game.state.check_winner()
-        if winner is self.agent_player:
-            reward = 1
-        elif winner is not None:
-            reward = -1
-        else:
-            reward = -1 / self.env_config.get("max_episode_steps")
+        if self.game.state.get_current_player() is not self.agent_player and not done:
+            observation, _, done, info = self.play_opponent_turns(observation)
+            winner = self.env.game.state.check_winner()
+            reward = self.env.calculate_reward(winner)
         
         return observation, reward, done, info
 
@@ -49,7 +42,7 @@ class SelfplayWrapper(Wrapper):
         done = False
         info = {}
 
-        while(self.game.state.get_current_player() is not self.agent_player):
+        while self.game.state.get_current_player() is not self.agent_player:
             opponent_player = self.game.state.get_current_player()
             opponent_agent = self.opponents[opponent_player]
             opponent_action = opponent_agent.get_action(observation, self.action_masks())
