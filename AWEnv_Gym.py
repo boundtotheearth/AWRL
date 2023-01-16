@@ -218,7 +218,7 @@ class AWEnv_Gym(Env):
         return observation, reward, done, info
     
     def calculate_reward(self, player, winner):
-        reward = 0
+        reward = -1 / self.env_config.get("max_episode_steps")
         if winner is player:
             reward += 1
         elif winner is not None:

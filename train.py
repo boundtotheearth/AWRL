@@ -40,6 +40,7 @@ if __name__ == "__main__":
     parser.add_argument("--max-eval-steps", type=int, default=2000)
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--n-epochs", type=int, default=10)
+    parser.add_argument("--ent-coef", type=float, default=0.0)
 
     args = parser.parse_args()
 
@@ -102,7 +103,8 @@ if __name__ == "__main__":
             n_steps=args.n_steps,
             batch_size=args.batch_size,
             learning_rate=args.lr,
-            n_epochs=args.n_epochs
+            n_epochs=args.n_epochs,
+            ent_coef=args.ent_coef
         )
     else:
         print("Train from scratch")
@@ -114,7 +116,8 @@ if __name__ == "__main__":
             batch_size=args.batch_size,
             learning_rate=args.lr,
             n_epochs=args.n_epochs,
-            policy_kwargs=policy_kwargs
+            policy_kwargs=policy_kwargs,
+            ent_coef=args.ent_coef
         )
 
     env.reset()
@@ -136,13 +139,8 @@ if __name__ == "__main__":
 
             episode_rewards = []
             episode_lengths = []
-            skip_eval = False
+            defeated = False
             for opponent in current_opponents:
-                if skip_eval:
-                    model.logger.record(f"league/{opponent}/ep_reward", "Skipped")
-                    model.logger.record(f"league/{opponent}/ep_length", "Skipped")
-                    continue
-
                 print(f"Evaluation against {opponent} started at", datetime.now().strftime("%H:%M:%S"))
                 env_config = deepcopy(eval_env_config)
                 env_config['opponent_list'] = [opponent]
@@ -163,15 +161,15 @@ if __name__ == "__main__":
                 mean_reward_for_opponent, std_reward_for_opponent = np.mean(episode_rewards_for_opponent), np.std(episode_rewards_for_opponent)
                 mean_ep_length_for_opponent, std_ep_length_for_opponent = np.mean(episode_lengths_for_opponent), np.std(episode_lengths_for_opponent)
                 
-                model.logger.record(f"league/{opponent}/ep_reward", f"{mean_reward_for_opponent} +/- {std_reward_for_opponent}")
-                model.logger.record(f"league/{opponent}/ep_length", f"{mean_ep_length_for_opponent} +/- {std_ep_length_for_opponent}")
+                model.logger.record(f"{opponent}/ep_reward", f"{mean_reward_for_opponent} +/- {std_reward_for_opponent}")
+                model.logger.record(f"{opponent}/ep_length", f"{mean_ep_length_for_opponent} +/- {std_ep_length_for_opponent}")
 
                 episode_rewards.extend(episode_rewards_for_opponent)
                 episode_lengths.extend(episode_lengths_for_opponent)
 
-                # if mean_reward_for_opponent < args.reward_threshold / 2:
-                #     print("Model is doing very poorly. Skipping evaluation to continue training...")
-                #     skip_eval = True
+                if mean_reward_for_opponent < args.reward_threshold:
+                    print(f"Model was defeated by {opponent}")
+                    defeated = True
 
             mean_reward, std_reward = np.mean(episode_rewards), np.std(episode_rewards)
             mean_ep_length, std_ep_length = np.mean(episode_lengths), np.std(episode_lengths)
@@ -179,8 +177,8 @@ if __name__ == "__main__":
             model.logger.record("eval/mean_reward", float(mean_reward))
             model.logger.record("eval/mean_ep_length", mean_ep_length)
             
-            if mean_reward > args.reward_threshold:
-                print("Exceeded reward threshold! Adding a new opponent!")
+            if not defeated:
+                print("All previous models defeated! Adding a new opponent!")
                 new_model_id = len(current_opponents)
                 new_model_name = os.path.join(args.load_opponents, f"model_{new_model_id}")
                 model.save(new_model_name)
