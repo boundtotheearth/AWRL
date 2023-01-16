@@ -3,7 +3,7 @@
 #SBATCH --job-name=testtrain
 #SBATCH --gpus=a100:1
 #SBATCH --partition=long
-#SBATCH --time=07:00:00
+#SBATCH --time=3-00:00:00
 
 hostname
 export PATH="/home/f/farnah/miniconda3/bin:$PATH"

@@ -15,8 +15,9 @@ dependencies:
   - rich
   - pytest
   - snakeviz
-  - memray
   - scipy
   - websockets
   - numba
+  - pip:
+    - memray
 prefix: /Users/farrellnah/miniforge3/envs/AWRL_env

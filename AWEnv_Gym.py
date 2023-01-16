@@ -198,7 +198,8 @@ class AWEnv_Gym(Env):
 
         if self.render_mode is not None:
             print(action)
-            
+        
+        player = self.game.get_current_player()
         winner = self.game.execute_action(action)
 
         if self.render_mode is not None:
@@ -206,40 +207,43 @@ class AWEnv_Gym(Env):
             print(self.game.state.get_player_stats())
 
         self.update_valid_actions()
-    
-        observation = self.game.get_observation(self.game.get_current_player())
 
-        reward = self.calculate_reward(winner)
+        new_player = self.game.get_current_player()
+        observation = self.game.get_observation(new_player)
+
+        reward = self.calculate_reward(player, winner)
         done = winner is not None
         info = {}
 
         return observation, reward, done, info
     
-    def calculate_reward(self, winner):
-        current_player = self.game.get_current_player()
+    def calculate_reward(self, player, winner):
         reward = 0
-        if winner is current_player:
-            reward += 100
+        if winner is player:
+            reward += 1
         elif winner is not None:
-            reward -= 100
+            reward -= 1
 
-        new_potential = self.calculate_potential(current_player)
-        reward += (new_potential - self.prev_potential[current_player]) / 1000
+        new_potential = self.calculate_potential(player)
+        reward += (new_potential - self.prev_potential[player])
 
-        self.prev_potential[current_player] = new_potential
+        self.prev_potential[player] = new_potential
 
         return reward
         
     def calculate_potential(self, player):
         player_stats = self.game.state.get_player_stats()
-        potential = 0
+        player_potential = 0
+        other_potential = 0
         for other_player, stats in player_stats.items():
             if other_player == player:
-                potential += stats['army_value']
-                potential += stats['income']
+                player_potential += stats['army_value']
+                player_potential += stats['income']
             else:
-                potential -= stats['army_value']
-                potential -= stats['income']
+                other_potential += stats['army_value']
+                other_potential += stats['income']
+
+        potential = player_potential / (player_potential + other_potential)
         return potential
 
     def action_masks(self):

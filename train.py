@@ -40,7 +40,6 @@ if __name__ == "__main__":
     parser.add_argument("--max-eval-steps", type=int, default=2000)
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--n-epochs", type=int, default=10)
-    parser.add_argument("--agent-player", type=str, default='O')
 
     args = parser.parse_args()
 
@@ -59,7 +58,7 @@ if __name__ == "__main__":
         "max_episode_steps": args.max_steps,
         "render_mode": None,
         "seed": None,
-        'agent_player': args.agent_player,
+        'agent_player': 'random',
         'opponent_list': current_opponents
     }
     env = make_vec_env(
@@ -74,7 +73,7 @@ if __name__ == "__main__":
         "max_episode_steps": args.max_eval_steps,
         "render_mode": None,
         "seed": None,
-        'agent_player': args.agent_player
+        'agent_player': 'random'
     }
     # eval_env = make_vec_env(AWEnv_Gym.selfplay_env, n_envs=args.n_eval_envs, env_kwargs={'env_config': eval_env_config})
     selfplay_eval_callback = SelfplayCallback(
