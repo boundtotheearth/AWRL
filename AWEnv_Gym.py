@@ -1,13 +1,10 @@
-import gym
 from gym import Env, spaces
 from gym.wrappers import TimeLimit, FlattenObservation
 from SelfplayWrapper import SelfplayWrapper
 
-import copy
 import pprint
 import random
 import numpy as np
-from numpy import ravel_multi_index
 import math
 from collections import OrderedDict
 
@@ -15,8 +12,8 @@ from Game.Game import Game
 from Game.CO import BaseCO
 from Game.Action import Action, ActionEnd, ActionMove, ActionMoveCombineLoad, ActionDirectAttack, ActionIndirectAttack, ActionCapture, ActionBuild, ActionRepair, ActionUnload
 from Agent import Agent
-
-from enum import Enum
+from Game.Terrain import Property, standard_terrain
+from Game.Unit import standard_units
 
 class AWEnv_Gym(Env):
     metadata = {"render_modes": ["none", "text", "raw"]}
@@ -67,15 +64,15 @@ class AWEnv_Gym(Env):
         self.seed(env_config.get('seed', 0))
         self.gamma = env_config.get('gamma', 0.99)
 
-        self.player_list = self.game.get_players_list()
-        self.terrain_list = self.game.get_terrain_list()
-        self.property_list = self.game.get_property_list()
-        self.unit_list = self.game.get_unit_list()
+        self.players = self.game.get_players_list()
 
         self.rows = self.game.map_height
         self.cols = self.game.map_width
 
-        self.prev_potential = {player: self.calculate_potential(player) for player in self.player_list}
+        terrain_list = [terrain for terrain in standard_terrain if not issubclass(terrain, Property)]
+        property_list = [terrain for terrain in standard_terrain if issubclass(terrain, Property)]
+
+        self.prev_potential = {player: self.calculate_potential(player) for player in self.players}
 
         self.max_move = 9
         self.max_attack = 8
@@ -86,7 +83,7 @@ class AWEnv_Gym(Env):
             ActionDirectAttack: (self.rows, self.cols, (2*self.max_move)+1, (2*self.max_move)+1, 4),
             ActionIndirectAttack: (self.rows, self.cols, (2*self.max_attack)+1, (2*self.max_attack)+1),
             ActionCapture: (self.rows, self.cols, (2*self.max_move)+1, (2*self.max_move)+1),
-            ActionBuild: (self.rows, self.cols, len(self.unit_list)),
+            ActionBuild: (self.rows, self.cols, len(standard_units)),
             ActionRepair: (self.rows, self.cols, (2*self.max_move)+1, (2*self.max_move)+1, 4),
             ActionUnload: (self.rows, self.cols, (2*self.max_move)+1, (2*self.max_move)+1, 4, 2),
             ActionEnd: (1,)
@@ -104,11 +101,15 @@ class AWEnv_Gym(Env):
         self.action_mask = {action_type: np.full(self.actions[action_type], False) for action_type in self.actions}
 
         self.observation_space = spaces.Dict(OrderedDict({
-            "terrain": spaces.Box(low=0, high=1, shape=(len(self.terrain_list), self.rows, self.cols)), #[0, 1] for each terrain type
-            "properties": spaces.Box(low=0, high=20, shape=(3, len(self.property_list), self.rows, self.cols)), # [0, 20] for each property type, for each player
-            "units": spaces.Box(low=0, high=100, shape=(2, len(self.unit_list), 3, self.rows, self.cols)), # [0, 10] health, [0, 99] fuel, [0, 99] ammo, for each unit type, for each player
+            "terrain": spaces.Box(low=0, high=1, shape=(len(terrain_list), self.rows, self.cols)), #[0, 1] for each terrain type
+            "properties": spaces.Box(low=0, high=20, shape=(3, len(property_list), self.rows, self.cols)), # [0, 20] for each property type, for each player
+            "units": spaces.Box(low=0, high=100, shape=(2, len(standard_units), 3, self.rows, self.cols)), # [0, 10] health, [0, 99] fuel, [0, 99] ammo, for each unit type, for each player
             "funds": spaces.Box(low=0, high=999999, shape=(2,)),
         }))
+
+        self.terrain_indices = {terrain_type: i for i, terrain_type in enumerate(terrain_list)}
+        self.property_indices = {terrain_type: i for i, terrain_type in enumerate(property_list)}
+        self.unit_indices = {unit_type: i for i, unit_type in enumerate(standard_units)}
 
         self.update_valid_actions()
     
@@ -157,13 +158,56 @@ class AWEnv_Gym(Env):
         self.update_valid_actions()
 
         new_player = self.game.get_current_player()
-        observation = self.game.get_observation(new_player)
+        observation = self.get_observation(new_player)
 
         reward = self.calculate_reward(player, winner)
         done = winner is not None
         info = {}
 
         return observation, reward, done, info
+
+    def get_observation(self, player):
+        height = self.rows
+        width = self.cols
+        players = len(self.players)
+
+        observation = {
+            'terrain': np.zeros((len(self.terrain_indices), height, width), dtype=int),
+            'properties': np.zeros((players+1, len(self.property_indices), height, width), dtype=int),
+            'units': np.zeros((players, len(self.unit_indices), 3, height, width), dtype=int),
+            'funds': np.zeros((players), dtype=int)
+        }
+
+        get_terrain = self.game.state.get_terrain
+        get_property = self.game.state.get_property
+        get_unit = self.game.state.get_unit
+
+        for r in range(height):
+            for c in range(width):
+                position = (r, c)
+                terrain = get_terrain(position)
+                if not isinstance(terrain, Property):
+                    observation['terrain'][self.terrain_indices[type(terrain)], r, c] = 1
+
+                for p in self.players:
+                    p_id = 0 if p is player else 1
+                    unit = get_unit(position, owner=p)
+                    if unit is not None:
+                        observation['units'][p_id, self.unit_indices[type(unit)], 0, r, c] = unit.get_display_health()
+                        observation['units'][p_id, self.unit_indices[type(unit)], 1, r, c] = unit.fuel
+                        observation['units'][p_id, self.unit_indices[type(unit)], 2, r, c] = unit.ammo
+                    
+
+                property = get_property(position)
+                if property is not None:
+                    p_id = 0 if property.owner is player else 2 if property.owner == 'N' else 1
+                    observation['properties'][p_id, self.property_indices[type(property)], r, c] = 1
+        
+        for p in self.players:
+            p_id = 0 if p is player else 1
+            observation['funds'][p_id] = self.game.state.funds[p]
+
+        return observation
     
     def calculate_reward(self, player, winner):
         reward = -1 / self.env_config.get("max_episode_steps")
@@ -298,7 +342,7 @@ class AWEnv_Gym(Env):
             r, c = position                  
             #Build
             for unit_type in property.buildables:
-                idx = self.unit_list.index(unit_type)
+                idx = self.unit_indices[unit_type]
                 build_action = ActionBuild(position, unit_type.code)
                 if build_action.validate(current_state):
                     action_args = (r, c, idx)
@@ -314,7 +358,7 @@ class AWEnv_Gym(Env):
         current_player = self.game.get_current_player()
 
         self.update_valid_actions()
-        return self.game.get_observation(self.game.get_current_player())
+        return self.get_observation(current_player)
     
     def render(self, mode, **kwargs):
         if mode == "text":
@@ -323,7 +367,7 @@ class AWEnv_Gym(Env):
             print(self.game.state)
         elif mode == "raw":
             pp = pprint.PrettyPrinter()
-            pp.pprint(self.game.get_observation())
+            pp.pprint(self.get_observation())
     
     def seed(self, seed=0):
         random.seed(seed)

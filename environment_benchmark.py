@@ -33,7 +33,7 @@ if __name__ == "__main__":
 
         timestep_counter = 0
         trial_timer_start_ns = time.perf_counter_ns()
-        for _ in range(200):
+        for _ in range(500):
             action_mask = get_action_masks(env)
             action = test_agent.get_action(observation, action_mask)
 
