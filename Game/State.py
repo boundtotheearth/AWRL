@@ -67,7 +67,7 @@ class State:
                             continue
 
                         self._terrain_adjacency_matrix[move_type][source_idx][target_idx] = cost
-            self._terrain_movement_costs[move_type] = shortest_path(self._terrain_adjacency_matrix[move_type])
+            self._terrain_movement_costs[move_type] = shortest_path(self._terrain_adjacency_matrix[move_type]).astype(int)
         
         self.update_movement_cost()
 
@@ -75,8 +75,7 @@ class State:
         if unit_position in self.units:
             unit = self.units[unit_position]
             return unit if owner is None or unit.owner is owner else None
-        else:
-            return None
+        return None
 
     def get_all_units(self, owner=None):
         if owner is None:
@@ -247,7 +246,7 @@ class State:
         end_id = end[0] * self.map_width + end[1]
 
         if end in self._unblocked_spaces[start]:
-            return int(self._terrain_movement_costs[unit.move_type][start_id][end_id])
+            return self._terrain_movement_costs[unit.move_type][start_id][end_id]
         else:
             return 100
     

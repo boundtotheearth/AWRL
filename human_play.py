@@ -19,8 +19,8 @@ env_config = {
     "max_episode_steps": 10000,
     "render_mode": 'text',
     "seed": None,
-    "agent_player": "B",
-    "opponent_list": [AIAgent(MaskablePPO.load("opponents/model_1"), deterministic=True)],
+    "agent_player": "O",
+    "opponent_list": [HumanAgent()],
     "strict": False
 }
 
@@ -29,7 +29,7 @@ observation = env.reset()
 
 env.render(mode='text')
 
-model = MaskablePPO.load("ppo_simple/current_model")
+model = MaskablePPO.load("opponents/model_4")
 # test_agent = RandomAgent()
 test_agent = AIAgent(model, deterministic=True)
 
@@ -47,5 +47,5 @@ while True:
     if done[0]:
         print("Done", reward)
         break
-    input("Turn ended")
+    # input("Turn ended")
 print(episode_reward)

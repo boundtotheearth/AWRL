@@ -16,6 +16,10 @@ class Action:
         self.validated = True
         self.state = state
         return True
+    
+    def invalidate(self):
+        self.validated = False
+        self.state = None
 
     def validate_and_execute(self, state):
         if self.validated:

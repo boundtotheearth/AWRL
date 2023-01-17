@@ -60,10 +60,6 @@ class Game:
 
                 for p in self.players:
                     p_id = 0 if p is player else 1
-                    property = get_property(position, owner=p)
-                    if property is not None:
-                        observation['properties'][p_id, self.property_indices[type(property)], r, c] = 1
-
                     unit = get_unit(position, owner=p)
                     if unit is not None:
                         observation['units'][p_id, self.unit_indices[type(unit)], 0, r, c] = unit.get_display_health()
@@ -71,6 +67,11 @@ class Game:
                         observation['units'][p_id, self.unit_indices[type(unit)], 2, r, c] = unit.ammo
                     
                     observation['funds'][p_id] = self.state.funds[p]
+
+                property = get_property(position, owner=p)
+                if property is not None:
+                    p_id = 0 if property.owner is player else 2 if property.owner == 'N' else 1
+                    observation['properties'][p_id, self.property_indices[type(property)], r, c] = 1
 
         return observation
 
