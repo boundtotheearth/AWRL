@@ -42,7 +42,7 @@ class Game:
 
         observation = {
             'terrain': np.zeros((len(self.terrain_indices), height, width), dtype=int),
-            'properties': np.zeros((len(self.players), len(self.property_indices), height, width), dtype=int),
+            'properties': np.zeros((len(self.players)+1, len(self.property_indices), height, width), dtype=int),
             'units': np.zeros((len(self.players), len(self.unit_indices), 3, height, width), dtype=int),
             'funds': np.zeros((len(self.players)), dtype=int)
         }
@@ -68,7 +68,7 @@ class Game:
                     
                     observation['funds'][p_id] = self.state.funds[p]
 
-                property = get_property(position, owner=p)
+                property = get_property(position)
                 if property is not None:
                     p_id = 0 if property.owner is player else 2 if property.owner == 'N' else 1
                     observation['properties'][p_id, self.property_indices[type(property)], r, c] = 1
