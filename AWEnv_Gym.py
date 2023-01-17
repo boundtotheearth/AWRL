@@ -238,10 +238,10 @@ class AWEnv_Gym(Env):
         for other_player, stats in player_stats.items():
             if other_player == player:
                 player_potential += stats['army_value']
-                player_potential += stats['income']
+                player_potential +=  5 * stats['income']
             else:
                 other_potential += stats['army_value']
-                other_potential += stats['income']
+                other_potential += 5 * stats['income']
 
         potential = player_potential / (player_potential + other_potential)
         return potential

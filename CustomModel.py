@@ -12,9 +12,11 @@ class CustomConvLayer(nn.Module):
         super().__init__()
         
         self.model = nn.Sequential(
-            nn.Conv2d(input_dim, 32, kernel_size=3, padding='same'),
+            nn.Conv2d(input_dim, 128, kernel_size=3, padding='same'),
             nn.ReLU(),
-            nn.Conv2d(32, 64, kernel_size=3, padding='same'),
+            nn.Conv2d(128, 128, kernel_size=3, padding='same'),
+            nn.ReLU(),
+            nn.Conv2d(128, 128, kernel_size=3, padding='same'),
             nn.ReLU(),
             nn.Flatten()
         )

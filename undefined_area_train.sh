@@ -23,4 +23,5 @@ python train.py \
 --n-envs=10 \
 --n-eval-envs=10 \
 --eval-freq=8192 \
---reward-threshold=1
+--reward-threshold=1.1 \
+--ent-coef=1e-3
