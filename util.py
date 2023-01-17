@@ -25,7 +25,7 @@ def parse_direction_reverse(direction_input):
     }
     return direction_map.get(direction_input)
 
-def calculate_damage(attacking_co, attacking_unit, defending_co, defending_unit, terrain):
+def calculate_damage(attacking_co, attacking_unit, defending_co, defending_unit, terrain, CT):
     base_damage = attacking_unit.attack_table.get(type(defending_unit), ())[0]
     if base_damage is None:
         raise Exception("{attacker} cannot attack {defender}".format(attacker=attacking_unit, defender=defending_unit))
@@ -35,8 +35,9 @@ def calculate_damage(attacking_co, attacking_unit, defending_co, defending_unit,
     co_defense = defending_co.get_defence_modifier(type(defending_unit))
     terrain_stars = terrain.defence
     defender_visual_health = defending_unit.get_display_health()
+    ct_attack = CT * 10
 
-    final_damage = (((base_damage * co_attack) / 100) + luck) * (attacker_visual_health / 10) * ((200 - (co_defense + (terrain_stars * defender_visual_health))) / 100)
+    final_damage = (((base_damage * (co_attack + ct_attack)) / 100) + luck) * (attacker_visual_health / 10) * ((200 - (co_defense + (terrain_stars * defender_visual_health))) / 100)
 
     final_damage = math.ceil(final_damage / 0.05) * 0.05
     final_damage = math.floor(final_damage)

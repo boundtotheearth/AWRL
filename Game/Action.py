@@ -1,5 +1,5 @@
 from util import calculate_damage, parse_direction
-from Game.Terrain import Property, TerrainAirport, TerrainPort
+from Game.Terrain import Property, TerrainAirport, TerrainPort, TerrainCommTower
 from Game.MoveType import MoveType
 import math
 
@@ -293,8 +293,15 @@ class ActionAttack(Action):
         self.defending_co = self.state.co[self.defending_unit.owner]
         self.attacking_terrain = self.state.get_terrain(self.unit_position)
         self.defending_terrain = self.state.get_terrain(self.attack_target)
+        self.attacking_CT = 0
+        self.defending_CT = 0
+        for p in self.state.get_all_properties().values():
+            if p.owner == self.owner:
+                self.attacking_CT += 1
+            elif p.owner == self.defending_unit.owner:
+                self.defending_CT += 1
 
-        damage = calculate_damage(self.attacking_co, self.attacking_unit, self.defending_co, self.defending_unit, self.defending_terrain)
+        damage = calculate_damage(self.attacking_co, self.attacking_unit, self.defending_co, self.defending_unit, self.defending_terrain, self.attacking_CT)
         
         self.attacking_unit.change_ammo(-self.attacker_ammo_used)
         original_health = self.defending_unit.get_display_health()
@@ -338,7 +345,7 @@ class ActionDirectAttack(ActionAttack):
         super().execute()
 
         if self.can_counterattack:
-            counterattack = calculate_damage(self.defending_co, self.defending_unit, self.attacking_co, self.attacking_unit, self.attacking_terrain)
+            counterattack = calculate_damage(self.defending_co, self.defending_unit, self.attacking_co, self.attacking_unit, self.attacking_terrain, self.defending_CT)
             self.defending_unit.change_ammo(-self.defender_ammo_used)
             original_health = self.attacking_unit.get_display_health()
             self.attacking_unit.change_health(-counterattack)
