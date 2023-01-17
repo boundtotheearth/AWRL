@@ -41,6 +41,7 @@ if __name__ == "__main__":
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--n-epochs", type=int, default=10)
     parser.add_argument("--ent-coef", type=float, default=0.0)
+    parser.add_argument("--per-step-penalty", type=float, default=-0.0001)
 
     args = parser.parse_args()
 
@@ -57,6 +58,7 @@ if __name__ == "__main__":
     env_config = {
         "map": args.map_name,
         "max_episode_steps": args.max_steps,
+        "per_step_penalty": args.per_step_penalty,
         "render_mode": None,
         "seed": None,
         'agent_player': 'random',
@@ -72,6 +74,7 @@ if __name__ == "__main__":
     eval_env_config = {
         "map": args.map_name,
         "max_episode_steps": args.max_eval_steps,
+        "per_step_penalty": args.per_step_penalty,
         "render_mode": None,
         "seed": None,
         'agent_player': 'random'

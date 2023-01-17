@@ -62,7 +62,7 @@ class AWEnv_Gym(Env):
         strict = env_config.get('strict', True)
         self.game = env_config.get('game') or self.generate_game(self.map, strict)
         self.seed(env_config.get('seed', 0))
-        self.gamma = env_config.get('gamma', 0.99)
+        self.per_step_penalty = env_config.get('per_step_penalty', -0.0001)
 
         self.players = self.game.get_players_list()
 
@@ -133,14 +133,12 @@ class AWEnv_Gym(Env):
                 break
             action_type = a_type
 
-        
         sub_action_id = action_id - self.action_start_ids[action_type]
         action_args = np.unravel_index(sub_action_id, self.actions[action_type])
         return self._valid_actions[action_type][action_args]
 
     def step(self, action):
         if not isinstance(action, Action):
-            # action = self._valid_actions[action]
             action = self.fetch_action(action)
 
         assert action is not None
@@ -210,7 +208,7 @@ class AWEnv_Gym(Env):
         return observation
     
     def calculate_reward(self, player, winner):
-        reward = -1 / self.env_config.get("max_episode_steps")
+        reward = self.per_step_penalty
         if winner is player:
             reward += 1
         elif winner is not None:
