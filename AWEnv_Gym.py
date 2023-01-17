@@ -199,7 +199,7 @@ class AWEnv_Gym(Env):
                 property = get_property(position)
                 if property is not None:
                     p_id = 0 if property.owner is player else 2 if property.owner == 'N' else 1
-                    observation['properties'][p_id, self.property_indices[type(property)], r, c] = 1
+                    observation['properties'][p_id, self.property_indices[type(property)], r, c] = property.capture_amount
         
         for p in self.players:
             p_id = 0 if p is player else 1
