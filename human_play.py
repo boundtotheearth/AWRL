@@ -20,7 +20,7 @@ env_config = {
     "render_mode": 'text',
     "seed": None,
     "agent_player": "B",
-    "opponent_list": [RandomAgent()],
+    "opponent_list": [AIAgent(MaskablePPO.load("opponents/model_1"), deterministic=True)],
     "strict": False
 }
 

@@ -102,7 +102,7 @@ class AWEnv_Gym(Env):
         # Most algos do not support dict actions, so flatten the action space
         self.total_action_size = sum([math.prod(action_shape) for action_shape in self.actions.values()])
         self.action_space = spaces.Discrete(self.total_action_size)
-        self.action_mask = np.full((self.total_action_size,), False)
+        self.action_mask = {action_type: np.full(self.actions[action_type], False) for action_type in self.actions}
 
         self.observation_space = spaces.Dict(OrderedDict({
             "terrain": spaces.Box(low=0, high=1, shape=(len(self.terrain_list), self.rows, self.cols)), #[0, 1] for each terrain type
@@ -190,9 +190,22 @@ class AWEnv_Gym(Env):
 
     #     return action
 
+    def fetch_action(self, action_id):
+        action_type = None
+        for a_type, a_start_id in self.action_start_ids.items():
+            if a_start_id > action_id:
+                break
+            action_type = a_type
+
+        
+        sub_action_id = action_id - self.action_start_ids[action_type]
+        action_args = np.unravel_index(sub_action_id, self.actions[action_type])
+        return self._valid_actions[action_type][action_args]
+
     def step(self, action):
         if not isinstance(action, Action):
-            action = self._valid_actions[action]
+            # action = self._valid_actions[action]
+            action = self.fetch_action(action)
 
         assert action is not None
 
@@ -247,20 +260,26 @@ class AWEnv_Gym(Env):
         return potential
 
     def action_masks(self):
-        self.action_mask.fill(False)
-        self.action_mask[list(self._valid_actions.keys())] = True
-        return self.action_mask
+        # self.action_mask.fill(False)
+        # self.action_mask[list(self._valid_actions.keys())] = True
+        # return self.action_mask
+        action_masks = np.concatenate([self.action_mask[action_type].flatten() for action_type in self.actions])
+        return action_masks
     
     def update_valid_actions(self):
         # Construct action masks that match the shapes defined by self.actions
-        valid_actions = {}
+        valid_actions = {action_type: {} for action_type in self.actions}
+        for action_array in self.action_mask.values():
+            action_array.fill(False)
+
         current_state = self.game.state
         all_units = current_state.get_all_units()
         current_player = self.game.get_current_player()
         enemy_units = {position: unit for position, unit in all_units.items() if unit.owner != current_player}
 
-        end_action_id = self.action_start_ids[ActionEnd]
-        valid_actions[end_action_id] = ActionEnd()
+        # end_action_id = self.action_start_ids[ActionEnd]
+        valid_actions[ActionEnd][(0,)] = ActionEnd()
+        self.action_mask[ActionEnd][(0,)] = True
 
         possible_directions = self.possible_directions
         
@@ -281,9 +300,12 @@ class AWEnv_Gym(Env):
 
                     indirect_attack_action = ActionIndirectAttack(position, (attack_offset_r, attack_offset_c))
                     if indirect_attack_action.validate(current_state):
-                        sub_action_id = ravel_multi_index((r, c, attack_offset_id_r, attack_offset_id_c), self.actions[ActionIndirectAttack])
-                        action_id = self.action_start_ids[ActionIndirectAttack] + sub_action_id
-                        valid_actions[action_id] = indirect_attack_action
+                        # sub_action_id = ravel_multi_index((r, c, attack_offset_id_r, attack_offset_id_c), self.actions[ActionIndirectAttack])
+                        # action_id = self.action_start_ids[ActionIndirectAttack] + sub_action_id
+                        # valid_actions[action_id] = indirect_attack_action
+                        action_args = (r, c, attack_offset_id_r, attack_offset_id_c)
+                        valid_actions[ActionIndirectAttack][action_args] = indirect_attack_action
+                        self.action_mask[ActionIndirectAttack][action_args] = True
 
             for unblocked_position_r, unblocked_position_c in current_state._unblocked_spaces[position]:
                 move_offset_r = unblocked_position_r - r
@@ -299,36 +321,51 @@ class AWEnv_Gym(Env):
                 #Move/Combine/Load
                 move_combine_load_action = ActionMoveCombineLoad(move_action=move_action)
                 if move_combine_load_action.validate(current_state):
-                    sub_action_id = ravel_multi_index((r, c, move_id_r, move_id_c), self.actions[ActionMoveCombineLoad])
-                    action_id = self.action_start_ids[ActionMoveCombineLoad] + sub_action_id
-                    valid_actions[action_id] = move_combine_load_action
+                    # sub_action_id = ravel_multi_index((r, c, move_id_r, move_id_c), self.actions[ActionMoveCombineLoad])
+                    # action_id = self.action_start_ids[ActionMoveCombineLoad] + sub_action_id
+                    # valid_actions[action_id] = move_combine_load_action
+                    action_args = (r, c, move_id_r, move_id_c)
+                    valid_actions[ActionMoveCombineLoad][action_args] = move_combine_load_action
+                    self.action_mask[ActionMoveCombineLoad][action_args] = True
                 
                 #Direct Attack
-                for direction_index, direction in enumerate(possible_directions):
-                    direct_attack_action = ActionDirectAttack(move_action=move_action, attack_offset=direction)
-                    if direct_attack_action.attack_target not in enemy_units:
-                        continue
+                if 1 in unit.range:
+                    for direction_index, direction in enumerate(possible_directions):
+                        direct_attack_action = ActionDirectAttack(move_action=move_action, attack_offset=direction)
+                        if direct_attack_action.attack_target not in enemy_units:
+                            continue
 
-                    if direct_attack_action.validate(current_state):
-                        sub_action_id = ravel_multi_index((r, c, move_id_r, move_id_c, direction_index), self.actions[ActionDirectAttack])
-                        action_id = self.action_start_ids[ActionDirectAttack] + sub_action_id
-                        valid_actions[action_id] = direct_attack_action
-
+                        if direct_attack_action.validate(current_state):
+                            # sub_action_id = ravel_multi_index((r, c, move_id_r, move_id_c, direction_index), self.actions[ActionDirectAttack])
+                            # action_id = self.action_start_ids[ActionDirectAttack] + sub_action_id
+                            # valid_actions[action_id] = direct_attack_action
+                            action_args = (r, c, move_id_r, move_id_c, direction_index)
+                            valid_actions[ActionDirectAttack][action_args] = direct_attack_action
+                            self.action_mask[ActionDirectAttack][action_args] = True
+                
                 #Capture
-                capture_action = ActionCapture(move_action=move_action)
-                if capture_action.validate(current_state):
-                    sub_action_id = ravel_multi_index((r, c, move_id_r, move_id_c), self.actions[ActionCapture])
-                    action_id = self.action_start_ids[ActionCapture] + sub_action_id
-                    valid_actions[action_id] = capture_action
+                if unit.can_capture:
+                    capture_action = ActionCapture(move_action=move_action)
+                    if capture_action.validate(current_state):
+                        # sub_action_id = ravel_multi_index((r, c, move_id_r, move_id_c), self.actions[ActionCapture])
+                        # action_id = self.action_start_ids[ActionCapture] + sub_action_id
+                        # valid_actions[action_id] = capture_action
+                        action_args = (r, c, move_id_r, move_id_c)
+                        valid_actions[ActionCapture][action_args] = capture_action
+                        self.action_mask[ActionCapture][action_args] = True
+                        
 
                 #Repair
                 if unit.can_repair:
                     for direction_index, direction in enumerate(possible_directions):
                         repair_action = ActionRepair(move_action=move_action, repair_offset=direction)
                         if repair_action.validate(current_state):
-                            sub_action_id = ravel_multi_index((r, c, move_id_r, move_id_c, direction_index), self.actions[ActionRepair])
-                            action_id = self.action_start_ids[ActionRepair] + sub_action_id
-                            valid_actions[action_id] = repair_action
+                            # sub_action_id = ravel_multi_index((r, c, move_id_r, move_id_c, direction_index), self.actions[ActionRepair])
+                            # action_id = self.action_start_ids[ActionRepair] + sub_action_id
+                            # valid_actions[action_id] = repair_action
+                            action_args = (r, c, move_id_r, move_id_c, direction_index)
+                            valid_actions[ActionRepair][action_args] = repair_action
+                            self.action_mask[ActionRepair][action_args] = True
 
                 #Unload
                 for idx in range(len(unit.in_load)):
@@ -337,9 +374,12 @@ class AWEnv_Gym(Env):
                         if unload_action.unload_position in all_units:
                             continue
                         if unload_action.validate(current_state):
-                            sub_action_id = ravel_multi_index((r, c, move_id_r, move_id_c, direction_index, idx), self.actions[ActionUnload])
-                            action_id = self.action_start_ids[ActionUnload] + sub_action_id
-                            valid_actions[action_id] = unload_action
+                            # sub_action_id = ravel_multi_index((r, c, move_id_r, move_id_c, direction_index, idx), self.actions[ActionUnload])
+                            # action_id = self.action_start_ids[ActionUnload] + sub_action_id
+                            # valid_actions[action_id] = unload_action
+                            action_args = (r, c, move_id_r, move_id_c, direction_index, idx)
+                            valid_actions[ActionUnload][action_args] = unload_action
+                            self.action_mask[ActionUnload][action_args] = True
 
         for position, property in current_state.get_all_properties(owner=current_player).items(): 
             r, c = position                  
@@ -348,9 +388,12 @@ class AWEnv_Gym(Env):
                 idx = self.unit_list.index(unit_type)
                 build_action = ActionBuild(position, unit_type.code)
                 if build_action.validate(current_state):
-                    sub_action_id = ravel_multi_index((r, c, idx), self.actions[ActionBuild])
-                    action_id = self.action_start_ids[ActionBuild] + sub_action_id
-                    valid_actions[action_id] = build_action
+                    # sub_action_id = ravel_multi_index((r, c, idx), self.actions[ActionBuild])
+                    # action_id = self.action_start_ids[ActionBuild] + sub_action_id
+                    # valid_actions[action_id] = build_action
+                    action_args = (r, c, idx)
+                    valid_actions[ActionBuild][action_args] = build_action
+                    self.action_mask[ActionBuild][action_args] = True
 
         # Flatten the action masks to match the actual flat action space
         self._valid_actions = valid_actions 

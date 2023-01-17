@@ -1,5 +1,6 @@
 conda run --live-stream -n AWRL_env python train.py \
 --map-name="Maps/simple_build_capture.json" \
+--from-checkpoint="ppo_simple/current_model" \
 --load-opponents="opponents" \
 --n-iters=100 \
 --n-steps=32 \
