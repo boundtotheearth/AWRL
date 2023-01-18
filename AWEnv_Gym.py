@@ -62,7 +62,7 @@ class AWEnv_Gym(Env):
         strict = env_config.get('strict', True)
         self.game = env_config.get('game') or self.generate_game(self.map, strict)
         self.seed(env_config.get('seed', 0))
-        self.per_step_penalty = env_config.get('per_step_penalty', -0.0001)
+        self.per_step_penalty = -1 / env_config.get('max_episode_steps', np.inf)
 
         self.players = self.game.get_players_list()
 

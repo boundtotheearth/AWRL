@@ -2,7 +2,7 @@ conda run --live-stream -n AWRL_env python train.py \
 --map-name="Maps/simple_build_capture.json" \
 --load-opponents="opponents" \
 --n-iters=100 \
---n-steps=32 \
+--n-steps=64 \
 --n-eval-episodes=10 \
 --eval-freq=8 \
 --n-envs=30 \
@@ -11,3 +11,4 @@ conda run --live-stream -n AWRL_env python train.py \
 --max-eval-steps=2000 \
 --reward-threshold=1.1 \
 --ent-coef=1e-3
+--lr=0.0003

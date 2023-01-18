@@ -38,10 +38,9 @@ if __name__ == "__main__":
     parser.add_argument("--n-eval-envs", type=int, default=20)
     parser.add_argument("--max-steps", type=int, default=4000)
     parser.add_argument("--max-eval-steps", type=int, default=2000)
-    parser.add_argument("--lr", type=float, default=1e-3)
+    parser.add_argument("--lr", type=float, default=0.0003)
     parser.add_argument("--n-epochs", type=int, default=10)
     parser.add_argument("--ent-coef", type=float, default=0.0)
-    parser.add_argument("--per-step-penalty", type=float, default=-0.0001)
 
     args = parser.parse_args()
 
