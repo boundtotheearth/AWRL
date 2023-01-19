@@ -20,7 +20,7 @@ env_config = {
     "render_mode": 'text',
     "seed": None,
     "agent_player": "B",
-    "opponent_list": [AIAgent(MaskablePPO.load("opponents/model_1"), deterministic=True)],
+    "opponent_list": [AIAgent(MaskablePPO.load("model_10"), deterministic=True)],
     "strict": False
 }
 
@@ -29,7 +29,7 @@ observation = env.reset()
 
 env.render(mode='text')
 
-model = MaskablePPO.load("ppo_simple/current_model")
+model = MaskablePPO.load("current_model")
 # test_agent = RandomAgent()
 test_agent = AIAgent(model, deterministic=True)
 
