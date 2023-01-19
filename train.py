@@ -57,7 +57,6 @@ if __name__ == "__main__":
     env_config = {
         "map": args.map_name,
         "max_episode_steps": args.max_steps,
-        "per_step_penalty": args.per_step_penalty,
         "render_mode": None,
         "seed": None,
         'agent_player': 'random',
@@ -73,7 +72,6 @@ if __name__ == "__main__":
     eval_env_config = {
         "map": args.map_name,
         "max_episode_steps": args.max_eval_steps,
-        "per_step_penalty": args.per_step_penalty,
         "render_mode": None,
         "seed": None,
         'agent_player': 'random'
