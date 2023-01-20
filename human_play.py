@@ -19,8 +19,8 @@ env_config = {
     "max_episode_steps": 10000,
     "render_mode": 'text',
     "seed": None,
-    "agent_player": "B",
-    "opponent_list": [RandomAgent()],
+    "agent_player": "O",
+    "opponent_list": [AIAgent(MaskablePPO.load("model_5", n_steps=0), deterministic=True)],
     "strict": False
 }
 
@@ -29,7 +29,7 @@ observation = env.reset()
 
 env.render(mode='text')
 
-model = MaskablePPO.load("model_5")
+model = MaskablePPO.load("model_5", n_steps=0)
 # test_agent = RandomAgent()
 test_agent = AIAgent(model, deterministic=True)
 

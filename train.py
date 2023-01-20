@@ -50,7 +50,7 @@ if __name__ == "__main__":
     if args.load_opponents:
         print("Loading opponents...")
         opponent_models = [os.path.join(args.load_opponents, f).replace(".zip", "") for f in os.listdir(args.load_opponents) if os.path.isfile(os.path.join(args.load_opponents, f)) and ".zip" in f]
-        opponents = [AIAgent(MaskablePPO.load(model), name=model) for model in opponent_models]
+        opponents = [AIAgent(MaskablePPO.load(model, n_steps=0), name=model) for model in opponent_models]
         current_opponents.extend(opponents)
         print(f"Loaded {len(opponents)} opponents: {opponent_models}")
 
@@ -182,7 +182,7 @@ if __name__ == "__main__":
                 new_model_id = len(current_opponents)
                 new_model_name = os.path.join(args.load_opponents, f"model_{new_model_id}")
                 model.save(new_model_name)
-                new_model = MaskablePPO.load(new_model_name)
+                new_model = MaskablePPO.load(new_model_name, n_steps=0) # n_steps=0 to avoid allocating buffer
                 current_opponents.append(AIAgent(new_model, name=new_model_name, deterministic=True))
                 best_mean_reward = -np.inf
                 
