@@ -41,6 +41,7 @@ if __name__ == "__main__":
     parser.add_argument("--lr", type=float, default=0.0003)
     parser.add_argument("--n-epochs", type=int, default=10)
     parser.add_argument("--ent-coef", type=float, default=0.0)
+    parser.add_argument("--gamma", type=float, default=0.99)
 
     args = parser.parse_args()
 
@@ -104,7 +105,8 @@ if __name__ == "__main__":
             batch_size=args.batch_size,
             learning_rate=args.lr,
             n_epochs=args.n_epochs,
-            ent_coef=args.ent_coef
+            ent_coef=args.ent_coef,
+            gamma=args.gamma
         )
     else:
         print("Train from scratch")
@@ -117,7 +119,8 @@ if __name__ == "__main__":
             learning_rate=args.lr,
             n_epochs=args.n_epochs,
             policy_kwargs=policy_kwargs,
-            ent_coef=args.ent_coef
+            ent_coef=args.ent_coef,
+            gamma=args.gamma
         )
 
     env.reset()

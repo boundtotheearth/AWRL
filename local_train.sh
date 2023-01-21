@@ -11,5 +11,6 @@ conda run --live-stream -n AWRL_env python train.py \
 --max-steps=2000 \
 --max-eval-steps=2000 \
 --reward-threshold=1.1 \
---ent-coef=1e-3
---lr=0.0003
+--ent-coef=1e-3 \
+--lr=0.0003 \
+--gamma=0.999

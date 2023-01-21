@@ -1,0 +1,29 @@
+{
+  "terrain": [
+    ["NCT", "WOD", "PLN", "RVR", "PLN", "PLN", "NCT", "WOD", "MTN", "MTN", "WOD", "RVR", "RVR", "MTN", "NCT", "ROD", "SEA", "SIL"],
+    ["PLN", "PLN", "NCT", "ROD", "WOD", "PLN", "PLN", "PLN", "OBS", "PLN", "PLN", "RVR", "NBS", "PLN", "PLN", "SHL", "REF", "SEA"],
+    ["WOD", "RVR", "ROD", "RVR", "NCT", "PLN", "WOD", "PLN", "WOD", "PLN", "OHQ", "ROD", "WOD", "PLN", "WOD", "PLN", "SHL", "ROD"],
+    ["ROD", "RVR", "PLN", "PLN", "PLN", "SHL", "SEA", "SEA", "RVR", "ROD", "RVR", "RVR", "PLN", "PLN", "MTN", "WOD", "PLN", "NCT"],
+    ["ROD", "NCT", "WOD", "MTN", "SHL", "SHL", "SHL", "SEA", "NPT", "ROD", "NCT", "PLN", "PLN", "WOD", "PLN", "PLN", "PLN", "MTN"],
+    ["ROD", "PLN", "MTN", "MTN", "WOD", "NCT", "PLN", "WOD", "ROD", "ROD", "WOD", "PLN", "WOD", "PLN", "PLN", "WOD", "NBS", "RVR"],
+    ["NBS", "PLN", "PLN", "PLN", "PLN", "ROD", "ROD", "ROD", "ROD", "PLN", "PLN", "NCT", "PLN", "PLN", "RVR", "ROD", "RVR", "RVR"],
+    ["WOD", "PLN", "NCT", "ROD", "PLN", "WOD", "PLN", "NCT", "WOD", "WOD", "PLN", "PLN", "WOD", "NCT", "RVR", "BHQ", "PLN", "WOD"],
+    ["PLN", "PLN", "WOD", "ROD", "PLN", "PLN", "PLN", "MTN", "MTN", "MTN", "WOD", "PLN", "ROD", "ROD", "ROD", "PLN", "PLN", "MTN"],
+    ["MTN", "BBS", "PLN", "ROD", "ROD", "NCT", "PLN", "WOD", "MTN", "MTN", "WOD", "ROD", "ROD", "NPT", "RVR", "WOD", "BBS", "MTN"],
+    ["WOD", "PLN", "PLN", "NCT", "PLN", "PLN", "WOD", "PLN", "WOD", "MTN", "NCT", "ROD", "WOD", "SEA", "SEA", "PLN", "PLN", "WOD"],
+    ["RVR", "ROD", "RVR", "PLN", "WOD", "PLN", "NCT", "WOD", "PLN", "PLN", "PLN", "ROD", "PLN", "SHL", "SEA", "WOD", "PLN", "NCT"],
+    ["MTN", "ROD", "RVR", "SHL", "SHL", "MTN", "PLN", "PLN", "NCT", "PLN", "WOD", "ROD", "NCT", "SHL", "SHL", "PLN", "PLN", "PLN"],
+    ["NCT", "ROD", "ROD", "WOD", "SHL", "SHL", "WOD", "PLN", "ROD", "PLN", "PLN", "PLN", "WOD", "SHL", "PLN", "NCT", "WOD", "PLN"],
+    ["PLN", "WOD", "ROD", "ROD", "WOD", "SHL", "PLN", "NCT", "ROD", "ROD", "ROD", "PLN", "MTN", "MTN", "PLN", "RVR", "ROD", "RVR"],
+    ["NCM", "MTN", "PLN", "ROD", "ROD", "SEA", "RVR", "PLN", "PLN", "WOD", "NCT", "PLN", "MTN", "WOD", "PLN", "ROD", "NCT", "PLN"],
+    ["PIP", "PIP", "MTN", "WOD", "ROD", "ROD", "ROD", "PLN", "OBS", "PLN", "PLN", "PLN", "PLN", "NCT", "RVR", "RVR", "PLN", "WOD"],
+    ["SIL", "PIP", "NCM", "PLN", "NCT", "MTN", "RVR", "WOD", "MTN", "PLN", "WOD", "NBS", "ROD", "ROD", "ROD", "WOD", "PLN", "NCT"]
+  ],
+  "units": {
+    "O": [],
+    "B": [
+      {"row": 9, "col": 1, "code": "INF"}
+    ]
+  }
+}
+

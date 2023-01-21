@@ -13,6 +13,7 @@ source activate AWRL_env
 python train.py \
 --n-iters=100 \
 --map-name="Maps/Undefined_Area.json" \
+--from-checkpoint="ppo_undefined_area/current_model" \
 --save-path="ppo_undefined_area" \
 --load-opponents='opponents' \
 --lr=0.0003 \
