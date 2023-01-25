@@ -103,7 +103,6 @@ if __name__ == "__main__":
             env=env,
             n_steps=args.n_steps,
             batch_size=args.batch_size,
-            learning_rate=linear_schedule(args.lr),
             n_epochs=args.n_epochs,
             ent_coef=args.ent_coef,
             gamma=args.gamma
@@ -116,7 +115,6 @@ if __name__ == "__main__":
             verbose=1, 
             n_steps=args.n_steps, 
             batch_size=args.batch_size,
-            learning_rate=linear_schedule(args.lr),
             n_epochs=args.n_epochs,
             policy_kwargs=policy_kwargs,
             ent_coef=args.ent_coef,
@@ -127,6 +125,9 @@ if __name__ == "__main__":
     print("Training started at", datetime.now().strftime("%H:%M:%S"))
     for iter in range(1, args.n_iters + 1):
         print(f"Iteration {iter} started at", datetime.now().strftime("%H:%M:%S"))
+        #Adjust learning rate
+        model.learning_rate = ((args.n_iters + 1 - iter) / (args.n_iters + 1)) * args.lr
+        model._setup_lr_schedule()
 
         model.learn(total_timesteps=args.n_steps * args.n_envs, reset_num_timesteps=False, progress_bar=True)
 
