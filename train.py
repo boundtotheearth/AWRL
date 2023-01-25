@@ -103,7 +103,7 @@ if __name__ == "__main__":
             env=env,
             n_steps=args.n_steps,
             batch_size=args.batch_size,
-            learning_rate=args.lr,
+            learning_rate=linear_schedule(args.lr),
             n_epochs=args.n_epochs,
             ent_coef=args.ent_coef,
             gamma=args.gamma
@@ -116,7 +116,7 @@ if __name__ == "__main__":
             verbose=1, 
             n_steps=args.n_steps, 
             batch_size=args.batch_size,
-            learning_rate=args.lr,
+            learning_rate=linear_schedule(args.lr),
             n_epochs=args.n_epochs,
             policy_kwargs=policy_kwargs,
             ent_coef=args.ent_coef,
