@@ -5,7 +5,7 @@ from copy import deepcopy
 import numpy as np
 
 from Game.Game import Game
-from Game.CO import BaseCO
+from Game.CO import BaseCO, COAdder
 from Agent import AIAgent, RandomAgent
 from AWEnv_Gym import AWEnv_Gym
 from SelfplayCallback import SelfplayCallback
@@ -61,6 +61,7 @@ if __name__ == "__main__":
         "render_mode": None,
         "seed": None,
         'agent_player': 'random',
+        'co_cls': {'O': COAdder, 'B': COAdder},
         'opponent_list': current_opponents
     }
     env = make_vec_env(
@@ -75,6 +76,7 @@ if __name__ == "__main__":
         "max_episode_steps": args.max_eval_steps,
         "render_mode": None,
         "seed": None,
+        'co_cls': {'O': COAdder, 'B': COAdder},
         'agent_player': 'random'
     }
     # eval_env = make_vec_env(AWEnv_Gym.selfplay_env, n_envs=args.n_eval_envs, env_kwargs={'env_config': eval_env_config})
@@ -91,8 +93,7 @@ if __name__ == "__main__":
 
     # Defined custom CNN feature extractor
     policy_kwargs = dict(
-        features_extractor_class=CustomFeatureExtractor,
-        features_extractor_kwargs=dict(features_dim=128),
+        features_extractor_class=CustomFeatureExtractor
     )
 
     # Initialize model

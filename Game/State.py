@@ -150,6 +150,8 @@ class State:
         stats['income'] = len(self.get_all_properties(player)) * 1000
         # Funds
         stats['funds'] = self.funds[player]
+        stats['power'] = self.co[player].power
+        
         return stats
     
     def text_display(self):

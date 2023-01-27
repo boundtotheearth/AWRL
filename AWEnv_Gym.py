@@ -10,7 +10,7 @@ from collections import OrderedDict
 
 from Game.Game import Game
 from Game.CO import BaseCO
-from Game.Action import Action, ActionEnd, ActionMove, ActionMoveCombineLoad, ActionDirectAttack, ActionIndirectAttack, ActionCapture, ActionBuild, ActionRepair, ActionUnload
+from Game.Action import Action, ActionEnd, ActionMove, ActionMoveCombineLoad, ActionDirectAttack, ActionIndirectAttack, ActionCapture, ActionBuild, ActionRepair, ActionUnload, ActionCOP, ActionSCOP
 from Agent import Agent
 from Game.Terrain import Property, standard_terrain
 from Game.Unit import standard_units
@@ -60,7 +60,8 @@ class AWEnv_Gym(Env):
 
         self.map = env_config.get('map')
         strict = env_config.get('strict', True)
-        self.game = env_config.get('game') or self.generate_game(self.map, strict)
+        self.co_cls = env_config.get('co_cls', {'O': BaseCO, 'B': BaseCO})
+        self.game = env_config.get('game') or self.generate_game(self.co_cls, self.map, strict)
         self.seed(env_config.get('seed', 0))
         self.per_step_penalty = -1 / env_config.get('max_episode_steps', np.inf)
 
@@ -86,6 +87,8 @@ class AWEnv_Gym(Env):
             ActionBuild: (self.rows, self.cols, len(standard_units)),
             ActionRepair: (self.rows, self.cols, (2*self.max_move)+1, (2*self.max_move)+1, 4),
             ActionUnload: (self.rows, self.cols, (2*self.max_move)+1, (2*self.max_move)+1, 4, 2),
+            ActionCOP: (1,),
+            ActionSCOP: (1,),
             ActionEnd: (1,)
         })
 
@@ -105,6 +108,9 @@ class AWEnv_Gym(Env):
             "properties": spaces.Box(low=0, high=20, shape=(3, len(property_list), self.rows, self.cols)), # [0, 20] for each property type, for each player
             "units": spaces.Box(low=0, high=100, shape=(2, len(standard_units), 3, self.rows, self.cols)), # [0, 10] health, [0, 99] fuel, [0, 99] ammo, for each unit type, for each player
             "funds": spaces.Box(low=0, high=999999, shape=(2,)),
+            "power": spaces.Box(low=0, high=999999, shape=(2,)),
+            "cop_active": spaces.Box(low=0, high=1, shape=(2,)),
+            "scop_active": spaces.Box(low=0, high=1, shape=(2,))
         }))
 
         self.terrain_indices = {terrain_type: i for i, terrain_type in enumerate(terrain_list)}
@@ -113,10 +119,10 @@ class AWEnv_Gym(Env):
 
         self.update_valid_actions()
     
-    def generate_game(self, map, strict):
+    def generate_game(self, co_cls, map, strict):
         cos = {
-            'O': BaseCO(),
-            'B': BaseCO()
+            'O': co_cls['O'](),
+            'B': co_cls['B']()
         }
         game = Game.load_map(
             map_path=map,
@@ -173,7 +179,10 @@ class AWEnv_Gym(Env):
             'terrain': np.zeros((len(self.terrain_indices), height, width), dtype=int),
             'properties': np.zeros((players+1, len(self.property_indices), height, width), dtype=int),
             'units': np.zeros((players, len(self.unit_indices), 3, height, width), dtype=int),
-            'funds': np.zeros((players), dtype=int)
+            'funds': np.zeros((players), dtype=int),
+            'power': np.zeros((players), dtype=int),
+            'cop_active': np.zeros((players), dtype=int),
+            'scop_active': np.zeros((players), dtype=int)
         }
 
         get_terrain = self.game.state.get_terrain
@@ -204,6 +213,10 @@ class AWEnv_Gym(Env):
         for p in self.players:
             p_id = 0 if p is player else 1
             observation['funds'][p_id] = self.game.state.funds[p]
+            co = self.game.state.co[p]
+            observation['power'][p_id] = co.power
+            observation['cop_active'][p_id] = 1 if co.cop_applied else 0
+            observation['scop_active'][p_id] = 1 if co.scop_applied else 0
 
         return observation
     
@@ -253,6 +266,16 @@ class AWEnv_Gym(Env):
 
         valid_actions[ActionEnd][(0,)] = ActionEnd()
         self.action_mask[ActionEnd][(0,)] = True
+
+        cop_action = ActionCOP()
+        if cop_action.validate(current_state):
+            valid_actions[ActionCOP][(0,)] = cop_action
+            self.action_mask[ActionCOP][(0,)] = True
+
+        scop_action = ActionSCOP()
+        if scop_action.validate(current_state):
+            valid_actions[ActionSCOP][(0,)] = scop_action
+            self.action_mask[ActionSCOP][(0,)] = True
 
         possible_directions = self.possible_directions
         
@@ -352,7 +375,7 @@ class AWEnv_Gym(Env):
 
     def reset(self, seed=0, return_info=False, options=None):
         strict = self.env_config.get('strict', True)
-        self.game = self.env_config.get('game') or self.generate_game(self.map, strict)
+        self.game = self.env_config.get('game') or self.generate_game(self.co_cls, self.map, strict)
         current_player = self.game.get_current_player()
 
         self.update_valid_actions()

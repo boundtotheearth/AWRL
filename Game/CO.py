@@ -23,13 +23,16 @@ class COLibrary:
 class BaseCO:
     name = "None"
     def __init__(self):
+        # Overwrite these for each CO
+        self.cop_amount = 0
+        self.scop_amount = 0
+        self.modifiers = { unit: (100, 100) for unit in standard_units }
+
         self.player = None
         self.cop_applied = False
         self.scop_applied = False
-        self.cop_amount = 0
-        self.scop_amount = 0
         self.power = 0
-        self.modifiers = { unit: (100, 100) for unit in standard_units }
+        self.powers_used = 0
         self.original_modifiers = deepcopy(self.modifiers)
 
     def set_player(self, player):
@@ -56,6 +59,7 @@ class BaseCO:
             self.modifiers[unit] = new_modifier
 
         self.cop_applied = True
+        self.powers_used = min(10, self.powers_used + 1)
         self.power = 0
 
     def apply_scop(self, state):
@@ -65,7 +69,8 @@ class BaseCO:
             self.modifiers[unit] = new_modifier
         
         self.scop_applied = True
-        self.power
+        self.powers_used = min(10, self.powers_used + 1)
+        self.power = 0
 
     def reset_cop(self, state):
         self.modifiers = deepcopy(self.original_modifiers)
@@ -78,18 +83,18 @@ class BaseCO:
 class COAdder(BaseCO):
     name = "Adder"
 
-    def get_attack_modifier(self, unit_type):
-        return self.modifiers.get(unit_type, (0, 0))[0]
-    
-    def get_defence_modifier(self, unit_type):
-        return self.modifiers.get(unit_type, (0, 0))[1]
-
-    def get_luck_roll(self):
-        return random.randint(0, 9)
+    def __init__(self):
+        super().__init__()
+        self.cop_amount = 2 * 9000
+        self.scop_amount = 5 * 9000
+        self.power = 1000000
 
     def apply_cop(self, state):
         for unit in state.get_all_units(owner=self.player).values():
             unit.move += 1
+
+        # Update movement costs due to new move range
+        state.update_movement_cost()
         
         super().apply_cop(state)
 
@@ -97,13 +102,16 @@ class COAdder(BaseCO):
         for unit in state.get_all_units(owner=self.player).values():
             unit.move += 2
 
+        # Update movement costs due to new move range
+        state.update_movement_cost()
+
         super().apply_scop(state)
 
     def reset_cop(self, state):
         for unit in state.get_all_units(owner=self.player).values():
             unit.move -= 1
 
-        super().reset_scop(state)
+        super().reset_cop(state)
 
     def reset_scop(self, state):
         for unit in state.get_all_units(owner=self.player).values():

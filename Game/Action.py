@@ -309,8 +309,8 @@ class ActionAttack(Action):
 
         health_loss = self.defending_unit.get_display_health() - original_health
         self.value_inflicted = (health_loss / 10) * self.defending_unit.cost
-        self.defending_co.charge_power(self.value_inflicted)
-        self.attacking_co.charge_power(0.5 * self.value_inflicted)
+        self.defending_co.charge_power(-self.value_inflicted)
+        self.attacking_co.charge_power(-0.5 * self.value_inflicted)
 
         if self.defending_unit.health <= 0:
             self.state.remove_unit(self.attack_target)
@@ -352,8 +352,8 @@ class ActionDirectAttack(ActionAttack):
 
             health_loss = self.attacking_unit.get_display_health() - original_health
             self.counterattack_value_inflicted = (health_loss / 10) * self.attacking_unit.cost
-            self.attacking_co.charge_power(self.counterattack_value_inflicted)
-            self.defending_co.charge_power(0.5 * self.counterattack_value_inflicted)
+            self.attacking_co.charge_power(-self.counterattack_value_inflicted)
+            self.defending_co.charge_power(-0.5 * self.counterattack_value_inflicted)
             
             if self.attacking_unit.health <= 0:
                 self.state.remove_unit(self.destination)
@@ -606,7 +606,7 @@ class ActionCOP(Action):
     def validate(self, state):
         current_player = state.get_current_player()
         self.co = state.get_co(current_player)
-        if self.co.power < self.co.cop_amount:
+        if self.co.power < self.co.cop_amount * math.pow(1.2, self.co.powers_used):
             self.invalid_message = "Not enough power for COP"
             return False
 
@@ -624,7 +624,7 @@ class ActionSCOP(Action):
     def validate(self, state):
         current_player = state.get_current_player()
         self.co = state.get_co(current_player)
-        if self.co.power < self.co.scop_amount:
+        if self.co.power < self.co.scop_amount * math.pow(1.2, self.co.powers_used):
             self.invalid_message = "Not enough power for SCOP"
             return False
             

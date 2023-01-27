@@ -1,4 +1,4 @@
-from Game.Action import ActionEnd, ActionMove, ActionMoveCombineLoad, ActionDirectAttack, ActionIndirectAttack, ActionCapture, ActionBuild, ActionRepair, ActionUnload
+from Game.Action import ActionEnd, ActionMove, ActionMoveCombineLoad, ActionDirectAttack, ActionIndirectAttack, ActionCapture, ActionBuild, ActionRepair, ActionUnload, ActionCOP, ActionSCOP
 
 class ActionParser:
     def parse(self, command):
@@ -9,6 +9,10 @@ class ActionParser:
             action = None
             if move_type == "end":
                 action = ActionEnd()
+            elif move_type == "cop":
+                action = ActionCOP()
+            elif move_type == "scop":
+                action = ActionSCOP()
             elif move_type == "move":
                 #example: move 3,4 uulld
                 #Moving on top of a damaged unit of the same type should combine

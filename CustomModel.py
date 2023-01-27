@@ -7,6 +7,74 @@ from stable_baselines3.common.torch_layers import BaseFeaturesExtractor, Flatten
 from stable_baselines3.common.policies import ActorCriticPolicy
 from stable_baselines3.common.preprocessing import get_action_dim
 
+class SqueezeExcitation(nn.Module):
+    """
+    This block implements the Squeeze-and-Excitation block from https://arxiv.org/abs/1709.01507 (see Fig. 1).
+    Parameters ``activation``, and ``scale_activation`` correspond to ``delta`` and ``sigma`` in eq. 3.
+
+    Args:
+        input_channels (int): Number of channels in the input image
+        squeeze_channels (int): Number of squeeze channels
+        activation (Callable[..., torch.nn.Module], optional): ``delta`` activation. Default: ``torch.nn.ReLU``
+        scale_activation (Callable[..., torch.nn.Module]): ``sigma`` activation. Default: ``torch.nn.Sigmoid``
+    """
+
+    def __init__(
+        self,
+        input_channels,
+        squeeze_channels,
+        activation = nn.ReLU,
+        scale_activation = nn.Sigmoid,
+    ) -> None:
+        super().__init__()
+        self.avgpool = nn.AdaptiveAvgPool2d(1)
+        self.fc1 = nn.Conv2d(input_channels, squeeze_channels, 1)
+        self.fc2 = nn.Conv2d(squeeze_channels, input_channels, 1)
+        self.activation = activation()
+        self.scale_activation = scale_activation()
+
+    def _scale(self, input):
+        scale = self.avgpool(input)
+        scale = self.fc1(scale)
+        scale = self.activation(scale)
+        scale = self.fc2(scale)
+        return self.scale_activation(scale)
+
+    def forward(self, input):
+        scale = self._scale(input)
+        return scale * input
+
+class ResBlock(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+        self.conv = nn.Sequential(
+            nn.Conv2d(128, 128, kernel_size=5, padding='same'),
+            nn.LeakyReLU(),
+            nn.Conv2d(128, 128, kernel_size=5, padding='same'),
+            SqueezeExcitation(128, 128)
+        )
+        self.leakyRelu = nn.LeakyReLU()
+    
+    def forward(self, obs):
+        residual = obs
+        result = self.conv(obs)
+        result += residual
+        result = self.leakyRelu(result)
+        return result
+
+class InputEncoder(nn.Module):
+    def __init__(self, input_channels) -> None:
+        super().__init__()
+
+        self.encoder = nn.Sequential(
+            nn.Conv2d(input_channels, 128, kernel_size=1),
+            nn.LeakyReLU()
+        )
+    
+    def forward(self, input):
+        return self.encoder(input)
+
 class CustomConvLayer(nn.Module):
     def __init__(self, input_dim):
         super().__init__()
@@ -27,44 +95,50 @@ class CustomConvLayer(nn.Module):
 
 
 class CustomFeatureExtractor(BaseFeaturesExtractor):
-    def __init__(self, observation_space, features_dim=128):
-        super().__init__(observation_space, features_dim=features_dim)
+    def __init__(self, observation_space):
+        super().__init__(observation_space, features_dim=1)
 
-        extractors = {}
+        self.map_dims = observation_space['terrain'].shape[-2:]
 
-        for key, subspace in observation_space.spaces.items():
-            if key == "terrain": # 2d grid
-                extractors[key] = CustomConvLayer(math.prod(subspace.shape[:-2]))
-            elif key == "properties": # 2d grid
-                extractors[key] = CustomConvLayer(math.prod(subspace.shape[:-2]))
-            elif key == "units": # 2d grid
-                extractors[key] = CustomConvLayer(math.prod(subspace.shape[:-2]))
-            elif key == "funds": # vector
-                extractors[key] = nn.Linear(subspace.shape[0], 16)
-            
-            self.extractors = nn.ModuleDict(extractors)
-
-        with th.no_grad():
-            sample_observation = observation_space.sample()
-            features = []
-            for key, extractor in self.extractors.items():
-                feature = extractor(th.as_tensor(sample_observation[key]).unsqueeze(0))
-                features.append(feature)
-            
-            combined_features = th.cat(features, dim=1)
-            flatten_dim = combined_features.shape[1]
+        input_channels = 0
+        for key, space in observation_space.spaces.items():
+            if len(space.shape) >= 3:
+                input_channels += math.prod(space.shape[:-2])
+            elif len(space.shape) < 2:
+                input_channels += math.prod(space.shape)
         
-        self.linear = nn.Sequential(nn.Linear(flatten_dim, features_dim), nn.ReLU())
+        self.input_encoder = InputEncoder(input_channels=input_channels)
+        self.resnet = nn.Sequential(
+            ResBlock(),
+            ResBlock(),
+            ResBlock(),
+            ResBlock(),
+            ResBlock(),
+            ResBlock(),
+            ResBlock(),
+            ResBlock()
+        )
+
+        features_dim = 128 * math.prod(self.map_dims)
+
+        self._features_dim = features_dim
         
     def forward(self, observations):
-        features = []
-        for key, extractor in self.extractors.items():
-            reshaped_observation = observations[key]
-            features.append(extractor(reshaped_observation))
-        
-        combined_features = th.cat(features, dim=1)
+        #Concatenate all layers, broadcasting if neccessary
+        combined_obs = []
+        for key, obs in observations.items():
+            if obs.ndim-1 >= 3:
+                combined_obs.append(obs.flatten(start_dim=1, end_dim=-3))
+            elif obs.ndim-1 < 2:
+                combined_obs.append(obs.unsqueeze(-1).unsqueeze(-1).repeat([1, 1, self.map_dims[0], self.map_dims[1]]))
 
-        return self.linear(combined_features)
+        combined_obs = th.cat(combined_obs, dim=1)
+
+        encoded_input = self.input_encoder(combined_obs)
+        features = self.resnet(encoded_input)
+        features = features.flatten(start_dim=1)
+
+        return features
 
 class CustomActorCriticPolicy(ActorCriticPolicy):
     #need to define custom action network (self.action_net) to handle action embeddings via dot product instead of an mlp
