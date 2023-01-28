@@ -30,9 +30,9 @@ observation = env.reset()
 
 env.render(mode='text')
 
-# model = MaskablePPO.load("opponents/model_7", n_steps=0)
-test_agent = RandomAgent()
-# test_agent = AIAgent(model, deterministic=True)
+model = MaskablePPO.load("ppo_simple/current_model", n_steps=0)
+# test_agent = RandomAgent()
+test_agent = AIAgent(model, deterministic=True)
 
 episode_reward = 0
 while True:
@@ -41,7 +41,7 @@ while True:
     # observation = observation[0]
     action = test_agent.get_action(observation, action_masks[0])
 
-    observation, reward, done, info = env.step([action])
+    observation, reward, done, info = env.step(action)
     episode_reward += reward
     print(reward)
 

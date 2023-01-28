@@ -87,7 +87,6 @@ class COAdder(BaseCO):
         super().__init__()
         self.cop_amount = 2 * 9000
         self.scop_amount = 5 * 9000
-        self.power = 1000000
 
     def apply_cop(self, state):
         for unit in state.get_all_units(owner=self.player).values():

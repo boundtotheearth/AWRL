@@ -32,7 +32,7 @@ if __name__ == "__main__":
     parser.add_argument("--batch-size", type=int, default=64)
     parser.add_argument("--n-eval-episodes", type=int, default=200)
     parser.add_argument("--save-path", type=str, default="ppo_simple")
-    parser.add_argument("--eval-freq", type=int, default=512)
+    parser.add_argument("--eval-freq", type=int, default=1)
     parser.add_argument("--reward-threshold", type=float, default=0.9)
     parser.add_argument("--n-envs", type=int, default=20)
     parser.add_argument("--n-eval-envs", type=int, default=20)
