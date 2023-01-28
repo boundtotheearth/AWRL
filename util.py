@@ -62,6 +62,15 @@ def linear_schedule(initial_value: float):
         return progress_remaining * initial_value
     return func
 
+def exponential_schedule(initial_value: float, rate: float):
+    def func(progress_remaining: float) -> float:
+        if progress_remaining <= 0:
+            return 1e-9
+        
+        return initial_value * 10 ** (rate * math.log(progress_remaining))
+
+    return func
+
 awbw_terrain_id_code_map = {
     1: "PLN",
     2: "MTN",

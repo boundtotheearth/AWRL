@@ -21,7 +21,7 @@ env_config = {
     "seed": None,
     "agent_player": "B",
     'co_cls': {'O': COAdder, 'B': COAdder},
-    "opponent_list": [HumanAgent()],
+    "opponent_list": [AIAgent(MaskablePPO.load("opponents/model_6"), deterministic=True)],
     "strict": False
 }
 
@@ -30,7 +30,7 @@ observation = env.reset()
 
 env.render(mode='text')
 
-model = MaskablePPO.load("ppo_simple/current_model", n_steps=0)
+model = MaskablePPO.load("opponents/model_6", n_steps=0)
 # test_agent = RandomAgent()
 test_agent = AIAgent(model, deterministic=True)
 
@@ -48,5 +48,5 @@ while True:
     if done[0]:
         print("Done", reward)
         break
-    # input("Turn ended")
+    input("Turn ended")
 print(episode_reward)

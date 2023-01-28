@@ -9,7 +9,7 @@ from Game.CO import BaseCO, COAdder
 from Agent import AIAgent, RandomAgent
 from AWEnv_Gym import AWEnv_Gym
 from SelfplayCallback import SelfplayCallback
-from util import linear_schedule
+from util import linear_schedule, exponential_schedule
 
 from stable_baselines3.common.env_util import make_vec_env
 
@@ -39,6 +39,7 @@ if __name__ == "__main__":
     parser.add_argument("--max-steps", type=int, default=4000)
     parser.add_argument("--max-eval-steps", type=int, default=2000)
     parser.add_argument("--lr", type=float, default=0.0003)
+    parser.add_argument("--lr-decay-rate", type=float, default=1)
     parser.add_argument("--n-epochs", type=int, default=10)
     parser.add_argument("--ent-coef", type=float, default=0.0)
     parser.add_argument("--gamma", type=float, default=0.99)
@@ -50,11 +51,12 @@ if __name__ == "__main__":
     current_opponents = [RandomAgent()]
     if args.load_opponents:
         print("Loading opponents...")
-        opponent_models = [os.path.join(args.load_opponents, f).replace(".zip", "") for f in os.listdir(args.load_opponents) if os.path.isfile(os.path.join(args.load_opponents, f)) and ".zip" in f]
+        opponent_models = sorted([os.path.join(args.load_opponents, f).replace(".zip", "") for f in os.listdir(args.load_opponents) if os.path.isfile(os.path.join(args.load_opponents, f)) and ".zip" in f])
         opponents = [AIAgent(MaskablePPO.load(model, n_steps=0), name=model) for model in opponent_models]
         current_opponents.extend(opponents)
         print(f"Loaded {len(opponents)} opponents: {opponent_models}")
 
+    agent = AIAgent(None)
     env_config = {
         "map": args.map_name,
         "max_episode_steps": args.max_steps,
@@ -62,7 +64,8 @@ if __name__ == "__main__":
         "seed": None,
         'agent_player': 'random',
         'co_cls': {'O': COAdder, 'B': COAdder},
-        'opponent_list': current_opponents
+        # 'opponent_list': current_opponents
+        'opponent_list': [agent]
     }
     env = make_vec_env(
         env_id=AWEnv_Gym.selfplay_env,
@@ -122,12 +125,16 @@ if __name__ == "__main__":
             gamma=args.gamma
         )
 
+    agent.model = model
+
     env.reset()
     print("Training started at", datetime.now().strftime("%H:%M:%S"))
+    lr_schedule = exponential_schedule(args.lr, args.lr_decay_rate)
     for iter in range(1, args.n_iters + 1):
         print(f"Iteration {iter} started at", datetime.now().strftime("%H:%M:%S"))
         #Adjust learning rate
-        model.learning_rate = ((args.n_iters + 1 - iter) / (args.n_iters + 1)) * args.lr
+        progress_remaining = (args.n_iters + 1 - iter) / (args.n_iters + 1)
+        model.learning_rate = lr_schedule(progress_remaining)
         model._setup_lr_schedule()
 
         model.learn(total_timesteps=args.n_steps * args.n_envs, reset_num_timesteps=False, progress_bar=True)
