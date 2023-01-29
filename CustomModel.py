@@ -127,6 +127,10 @@ class CustomFeatureExtractor(BaseFeaturesExtractor):
         #Concatenate all layers, broadcasting if neccessary
         combined_obs = []
         for key, obs in observations.items():
+            #Rescale to [0,1]
+            low = th.from_numpy(self._observation_space[key].low)
+            high = th.from_numpy(self._observation_space[key].high)
+            obs = th.div(th.sub(obs, low), (high - low))
             if obs.ndim-1 >= 3:
                 combined_obs.append(obs.flatten(start_dim=1, end_dim=-3))
             elif obs.ndim-1 < 2:

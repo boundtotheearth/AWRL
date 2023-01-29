@@ -15,13 +15,13 @@ from stable_baselines3.common.env_util import make_vec_env
 from sb3_contrib.common.maskable.utils import get_action_masks
 
 env_config = {
-    "map": "Maps/simple_build_capture.json",
+    "map": "Maps/Undefined_Area.json",
     "max_episode_steps": 10000,
     "render_mode": 'text',
     "seed": None,
-    "agent_player": "B",
+    "agent_player": "O",
     'co_cls': {'O': COAdder, 'B': COAdder},
-    "opponent_list": [AIAgent(MaskablePPO.load("opponents/model_6"), deterministic=True)],
+    "opponent_list": [HumanAgent()],
     "strict": False
 }
 
@@ -30,7 +30,7 @@ observation = env.reset()
 
 env.render(mode='text')
 
-model = MaskablePPO.load("opponents/model_6", n_steps=0)
+model = MaskablePPO.load("model_6", n_steps=0)
 # test_agent = RandomAgent()
 test_agent = AIAgent(model, deterministic=True)
 
@@ -48,5 +48,5 @@ while True:
     if done[0]:
         print("Done", reward)
         break
-    input("Turn ended")
+    # input("Turn ended")
 print(episode_reward)
