@@ -35,7 +35,7 @@ class SelfplayWrapper(Wrapper):
         self.opponents = {}
         for player in self.env.game.players:
             if player is not self.agent_player:
-                self.opponents[player] = random.choices(self.opponent_list, weights=[2**i for i in range(len(self.opponent_list))])
+                self.opponents[player] = random.choices(self.opponent_list, weights=[2**i for i in range(len(self.opponent_list))])[0]
 
     def step(self, action):
         observation, reward, done, info = self.env.step(action)
