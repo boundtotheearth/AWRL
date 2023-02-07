@@ -606,7 +606,7 @@ class ActionCOP(Action):
     def validate(self, state):
         current_player = state.get_current_player()
         self.co = state.get_co(current_player)
-        if self.co.power < self.co.cop_amount * math.pow(1.2, self.co.powers_used):
+        if self.co.cop_progress() < 1:
             self.invalid_message = "Not enough power for COP"
             return False
 
@@ -624,7 +624,7 @@ class ActionSCOP(Action):
     def validate(self, state):
         current_player = state.get_current_player()
         self.co = state.get_co(current_player)
-        if self.co.power < self.co.scop_amount * math.pow(1.2, self.co.powers_used):
+        if self.co.scop_progress() < 1:
             self.invalid_message = "Not enough power for SCOP"
             return False
             

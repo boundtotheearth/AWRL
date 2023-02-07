@@ -15,13 +15,14 @@ from stable_baselines3.common.env_util import make_vec_env
 from sb3_contrib.common.maskable.utils import get_action_masks
 
 env_config = {
-    "map": "Maps/Undefined_Area.json",
+    "map": "Maps/simple_build_capture.json",
     "max_episode_steps": 10000,
     "render_mode": 'text',
     "seed": None,
-    "agent_player": "O",
+    "agent_player": "B",
     'co_cls': {'O': COAdder, 'B': COAdder},
-    "opponent_list": [HumanAgent()],
+    # "opponent_list": [AIAgent(MaskablePPO.load("opponents/model_2", n_steps=0), deterministic=True)],
+    "opponent_list": [RandomAgent()],
     "strict": False
 }
 
@@ -30,23 +31,24 @@ observation = env.reset()
 
 env.render(mode='text')
 
-model = MaskablePPO.load("model_6", n_steps=0)
-# test_agent = RandomAgent()
-test_agent = AIAgent(model, deterministic=True)
+# model = MaskablePPO.load("opponents/model_3", n_steps=0)
+test_agent = RandomAgent()
+# test_agent = AIAgent(model, deterministic=True)
 
 episode_reward = 0
 while True:
     action_masks = get_action_masks(env)
-    # observation = {key: observation[0] for key, observation in observation.items()}
-    # observation = observation[0]
+
     action = test_agent.get_action(observation, action_masks[0])
 
-    observation, reward, done, info = env.step(action)
+    # observation, reward, done, info = env.step(action)
+    observation, reward, done, info = env.step([action])
+
     episode_reward += reward
     print(reward)
 
     if done[0]:
         print("Done", reward)
         break
-    # input("Turn ended")
+    input("Turn ended")
 print(episode_reward)

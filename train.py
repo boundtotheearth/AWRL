@@ -12,11 +12,12 @@ from SelfplayCallback import SelfplayCallback
 from util import linear_schedule, exponential_schedule
 
 from stable_baselines3.common.env_util import make_vec_env
+from stable_baselines3.common.utils import get_schedule_fn
 
 from sb3_contrib import MaskablePPO
 from sb3_contrib.common.maskable.evaluation import evaluate_policy
 
-from CustomModel import CustomFeatureExtractor
+from CustomModel import CustomFeatureExtractor, CustomActorCriticPolicy
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -40,6 +41,8 @@ if __name__ == "__main__":
     parser.add_argument("--max-eval-steps", type=int, default=2000)
     parser.add_argument("--lr", type=float, default=0.0003)
     parser.add_argument("--lr-decay-rate", type=float, default=1)
+    parser.add_argument("--clip-range", type=float, default=0.2)
+    parser.add_argument("--clip-range-decay-rate", type=float, default=0)
     parser.add_argument("--n-epochs", type=int, default=10)
     parser.add_argument("--ent-coef", type=float, default=0.0)
     parser.add_argument("--gamma", type=float, default=0.99)
@@ -64,8 +67,8 @@ if __name__ == "__main__":
         "seed": None,
         'agent_player': 'random',
         'co_cls': {'O': COAdder, 'B': COAdder},
-        # 'opponent_list': current_opponents
-        'opponent_list': [agent]
+        'opponent_list': current_opponents
+        # 'opponent_list': [agent]
     }
     env = make_vec_env(
         env_id=AWEnv_Gym.selfplay_env,
@@ -80,7 +83,6 @@ if __name__ == "__main__":
         "render_mode": None,
         "seed": None,
         'co_cls': {'O': COAdder, 'B': COAdder},
-        'agent_player': 'random'
     }
     # eval_env = make_vec_env(AWEnv_Gym.selfplay_env, n_envs=args.n_eval_envs, env_kwargs={'env_config': eval_env_config})
     selfplay_eval_callback = SelfplayCallback(
@@ -95,9 +97,9 @@ if __name__ == "__main__":
     )
 
     # Defined custom CNN feature extractor
-    policy_kwargs = dict(
-        features_extractor_class=CustomFeatureExtractor
-    )
+    # policy_kwargs = dict(
+    #     features_extractor_class=CustomFeatureExtractor
+    # )
 
     # Initialize model
     if args.from_checkpoint:
@@ -114,29 +116,34 @@ if __name__ == "__main__":
     else:
         print("Train from scratch")
         model = MaskablePPO(
-            policy='MultiInputPolicy', 
+            policy=CustomActorCriticPolicy, 
             env=env, 
             verbose=1, 
             n_steps=args.n_steps, 
             batch_size=args.batch_size,
             n_epochs=args.n_epochs,
-            policy_kwargs=policy_kwargs,
             ent_coef=args.ent_coef,
             gamma=args.gamma
         )
 
     agent.model = model
-
+    
     env.reset()
     print("Training started at", datetime.now().strftime("%H:%M:%S"))
     lr_schedule = exponential_schedule(args.lr, args.lr_decay_rate)
+    clip_range_schedule = exponential_schedule(args.clip_range, args.clip_range_decay_rate)
     for iter in range(1, args.n_iters + 1):
         print(f"Iteration {iter} started at", datetime.now().strftime("%H:%M:%S"))
-        #Adjust learning rate
+        
         progress_remaining = (args.n_iters + 1 - iter) / (args.n_iters + 1)
-        model.learning_rate = lr_schedule(progress_remaining)
-        model._setup_lr_schedule()
 
+        #Adjust learning rate
+        model.learning_rate = lr_schedule(progress_remaining)
+        model.lr_schedule = get_schedule_fn(model.learning_rate)
+
+        #Adjust clip range
+        model.clip_range = get_schedule_fn(clip_range_schedule(progress_remaining))
+        
         model.learn(total_timesteps=args.n_steps * args.n_envs, reset_num_timesteps=False, progress_bar=True)
 
         model_save_path = os.path.join(args.save_path, "current_model")
@@ -153,35 +160,37 @@ if __name__ == "__main__":
             episode_lengths = []
             defeated = False
             for opponent in current_opponents:
-                print(f"Evaluation against {opponent} started at", datetime.now().strftime("%H:%M:%S"))
-                env_config = deepcopy(eval_env_config)
-                env_config['opponent_list'] = [opponent]
-                eval_env = make_vec_env(
-                    env_id=AWEnv_Gym.selfplay_env,
-                    n_envs=args.n_eval_envs,
-                    env_kwargs={'env_config': env_config},
-                    monitor_dir="Eval_Monitor"
-                )
-                
-                episode_rewards_for_opponent, episode_lengths_for_opponent = evaluate_policy(
-                    model,
-                    eval_env,
-                    n_eval_episodes=args.n_eval_episodes,
-                    deterministic=True,
-                    return_episode_rewards=True,
-                )
-                mean_reward_for_opponent, std_reward_for_opponent = np.mean(episode_rewards_for_opponent), np.std(episode_rewards_for_opponent)
-                mean_ep_length_for_opponent, std_ep_length_for_opponent = np.mean(episode_lengths_for_opponent), np.std(episode_lengths_for_opponent)
-                
-                model.logger.record(f"{opponent}/ep_reward", f"{mean_reward_for_opponent} +/- {std_reward_for_opponent}")
-                model.logger.record(f"{opponent}/ep_length", f"{mean_ep_length_for_opponent} +/- {std_ep_length_for_opponent}")
+                for player in ["O", "B"]:
+                    print(f"Evaluation against {opponent} with agent as {player} started at", datetime.now().strftime("%H:%M:%S"))
+                    env_config = deepcopy(eval_env_config)
+                    env_config['opponent_list'] = [opponent]
+                    env_config['agent_player'] = player
+                    eval_env = make_vec_env(
+                        env_id=AWEnv_Gym.selfplay_env,
+                        n_envs=args.n_eval_envs,
+                        env_kwargs={'env_config': env_config},
+                        monitor_dir="Eval_Monitor"
+                    )
+                    
+                    episode_rewards_for_opponent, episode_lengths_for_opponent = evaluate_policy(
+                        model,
+                        eval_env,
+                        n_eval_episodes=args.n_eval_episodes,
+                        deterministic=True,
+                        return_episode_rewards=True,
+                    )
+                    mean_reward_for_opponent, std_reward_for_opponent = np.mean(episode_rewards_for_opponent), np.std(episode_rewards_for_opponent)
+                    mean_ep_length_for_opponent, std_ep_length_for_opponent = np.mean(episode_lengths_for_opponent), np.std(episode_lengths_for_opponent)
+                    
+                    model.logger.record(f"{opponent}/{player}/ep_reward", f"{mean_reward_for_opponent} +/- {std_reward_for_opponent}")
+                    model.logger.record(f"{opponent}/{player}/ep_length", f"{mean_ep_length_for_opponent} +/- {std_ep_length_for_opponent}")
 
-                episode_rewards.extend(episode_rewards_for_opponent)
-                episode_lengths.extend(episode_lengths_for_opponent)
+                    episode_rewards.extend(episode_rewards_for_opponent)
+                    episode_lengths.extend(episode_lengths_for_opponent)
 
-                if mean_reward_for_opponent < args.reward_threshold:
-                    print(f"Model was defeated by {opponent}")
-                    defeated = True
+                    if mean_reward_for_opponent < args.reward_threshold:
+                        print(f"Model was defeated by {opponent}")
+                        defeated = True
 
             mean_reward, std_reward = np.mean(episode_rewards), np.std(episode_rewards)
             mean_ep_length, std_ep_length = np.mean(episode_lengths), np.std(episode_lengths)

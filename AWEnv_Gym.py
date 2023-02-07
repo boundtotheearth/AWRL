@@ -14,6 +14,7 @@ from Game.Action import Action, ActionEnd, ActionMove, ActionMoveCombineLoad, Ac
 from Agent import Agent
 from Game.Terrain import Property, standard_terrain
 from Game.Unit import standard_units
+from Game.MoveType import MoveType
 
 class AWEnv_Gym(Env):
     metadata = {"render_modes": ["none", "text", "raw"]}
@@ -50,6 +51,13 @@ class AWEnv_Gym(Env):
                 ),
                 max_episode_steps=env_config.get("max_episode_steps")
             )
+    
+    @classmethod
+    def env(cls, env_config):
+        return TimeLimit(
+            cls(env_config),
+            max_episode_steps=env_config.get("max_episode_steps")
+        )
 
     possible_directions = [(-1, 0), (1, 0), (0, 1), (0, -1)]
 
@@ -104,18 +112,28 @@ class AWEnv_Gym(Env):
         self.action_mask = {action_type: np.full(self.actions[action_type], False) for action_type in self.actions}
 
         self.observation_space = spaces.Dict(OrderedDict({
-            "terrain": spaces.Box(low=0, high=1, shape=(len(terrain_list), self.rows, self.cols)), #[0, 1] for each terrain type
-            "properties": spaces.Box(low=0, high=20, shape=(3, len(property_list), self.rows, self.cols)), # [0, 20] for each property type, for each player
-            "units": spaces.Box(low=0, high=100, shape=(2, len(standard_units), 3, self.rows, self.cols)), # [0, 10] health, [0, 99] fuel, [0, 99] ammo, for each unit type, for each player
-            "funds": spaces.Box(low=0, high=999999, shape=(2,)),
-            "power": spaces.Box(low=0, high=999999, shape=(2,)),
+            "terrain_type": spaces.Box(low=0, high=1, shape=(len(terrain_list), self.rows, self.cols)), 
+            "terrain_stars": spaces.Box(low=0, high=1, shape=(self.rows, self.cols)),
+            "property_type": spaces.Box(low=0, high=1, shape=(3, len(property_list), self.rows, self.cols)),
+            "property_capture": spaces.Box(low=0, high=1, shape=(3, len(property_list), self.rows, self.cols)),
+            "unit_type": spaces.Box(low=0, high=1, shape=(2, len(standard_units), self.rows, self.cols)),
+            "unit_attack": spaces.Box(low=0, high=1, shape=(2, len(standard_units), self.rows, self.cols)),
+            "unit_health": spaces.Box(low=0, high=1, shape=(2, self.rows, self.cols)),
+            "unit_fuel": spaces.Box(low=0, high=1, shape=(2, self.rows, self.cols)),
+            "unit_ammo": spaces.Box(low=0, high=1, shape=(2, self.rows, self.cols)),
+            "unit_available": spaces.Box(low=0, high=1, shape=(2, self.rows, self.cols)),
+            "funds": spaces.Box(low=0, high=1, shape=(2,)),
+            "cop": spaces.Box(low=0, high=1, shape=(2,)),
+            "scop": spaces.Box(low=0, high=1, shape=(2,)),
             "cop_active": spaces.Box(low=0, high=1, shape=(2,)),
-            "scop_active": spaces.Box(low=0, high=1, shape=(2,))
+            "scop_active": spaces.Box(low=0, high=1, shape=(2,)),
+            "day": spaces.Box(low=0, high=1, shape=(1,))
         }))
 
         self.terrain_indices = {terrain_type: i for i, terrain_type in enumerate(terrain_list)}
         self.property_indices = {terrain_type: i for i, terrain_type in enumerate(property_list)}
         self.unit_indices = {unit_type: i for i, unit_type in enumerate(standard_units)}
+        self.move_type_indices = {move_type: i for i, move_type in enumerate(MoveType)}
 
         self.update_valid_actions()
     
@@ -144,6 +162,11 @@ class AWEnv_Gym(Env):
         return self._valid_actions[action_type][action_args]
 
     def step(self, action):
+        if isinstance(action, list):
+            if len(action) > 1:
+                raise Exception("More than one action")
+            action = action[0]
+
         if not isinstance(action, Action):
             action = self.fetch_action(action)
 
@@ -176,48 +199,65 @@ class AWEnv_Gym(Env):
         players = len(self.players)
 
         observation = {
-            'terrain': np.zeros((len(self.terrain_indices), height, width), dtype=int),
-            'properties': np.zeros((players+1, len(self.property_indices), height, width), dtype=int),
-            'units': np.zeros((players, len(self.unit_indices), 3, height, width), dtype=int),
-            'funds': np.zeros((players), dtype=int),
-            'power': np.zeros((players), dtype=int),
-            'cop_active': np.zeros((players), dtype=int),
-            'scop_active': np.zeros((players), dtype=int)
+            "terrain_type": np.zeros((len(self.terrain_indices), self.rows, self.cols), dtype=np.float32),
+            "terrain_stars": np.zeros((self.rows, self.cols), dtype=np.float32),
+            "property_type": np.zeros((3, len(self.property_indices), self.rows, self.cols), dtype=np.float32),
+            "property_capture": np.zeros((3, len(self.property_indices), self.rows, self.cols), dtype=np.float32), # [0, 20] for each property type, for each player
+            "unit_type": np.zeros((2, len(self.unit_indices), self.rows, self.cols), dtype=np.float32),
+            "unit_attack": np.zeros((2, len(self.unit_indices), self.rows, self.cols), dtype=np.float32),
+            "unit_health": np.zeros((2, self.rows, self.cols), dtype=np.float32), # [0, 10] health, [0, 99] fuel, [0, 99] ammo, for each unit type, for each player
+            "unit_fuel": np.zeros((2, self.rows, self.cols), dtype=np.float32),
+            "unit_ammo": np.zeros((2, self.rows, self.cols), dtype=np.float32),
+            "unit_available": np.zeros((2, self.rows, self.cols), dtype=np.float32),
+            "funds": np.zeros((2,), dtype=np.float32),
+            "cop": np.zeros((2,), dtype=np.float32),
+            "scop": np.zeros((2,), dtype=np.float32),
+            "cop_active": np.zeros((2,), dtype=np.float32),
+            "scop_active": np.zeros((2,), dtype=np.float32),
+            "day": np.zeros((1,), dtype=np.float32)
         }
 
         get_terrain = self.game.state.get_terrain
         get_property = self.game.state.get_property
         get_unit = self.game.state.get_unit
 
+        observation['day'][0] = self.game.state.current_day / 100
+
         for r in range(height):
             for c in range(width):
                 position = (r, c)
                 terrain = get_terrain(position)
                 if not isinstance(terrain, Property):
-                    observation['terrain'][self.terrain_indices[type(terrain)], r, c] = 1
+                    observation['terrain_type'][self.terrain_indices[type(terrain)], r, c] = 1
+                    observation['terrain_stars'][r, c] = terrain.defence / 5
 
                 for p in self.players:
                     p_id = 0 if p is player else 1
                     unit = get_unit(position, owner=p)
                     if unit is not None:
-                        observation['units'][p_id, self.unit_indices[type(unit)], 0, r, c] = unit.get_display_health()
-                        observation['units'][p_id, self.unit_indices[type(unit)], 1, r, c] = unit.fuel
-                        observation['units'][p_id, self.unit_indices[type(unit)], 2, r, c] = unit.ammo
-                    
+                        observation['unit_type'][p_id, self.unit_indices[type(unit)], r, c] = 1
+                        observation['unit_health'][p_id, r, c] = unit.get_display_health() / 10
+                        observation['unit_fuel'][p_id, r, c] = unit.fuel / 99
+                        observation['unit_ammo'][p_id, r, c] = unit.ammo / 99
+                        observation['unit_available'][p_id, r, c] = 1 if unit.available else 0
+                        for unit_type in standard_units:
+                            observation['unit_attack'][p_id, self.unit_indices[unit_type], r, c] = unit.attack_table.get(unit_type, (0, 0))[0] / 200
 
                 property = get_property(position)
                 if property is not None:
                     p_id = 0 if property.owner is player else 2 if property.owner == 'N' else 1
-                    observation['properties'][p_id, self.property_indices[type(property)], r, c] = property.capture_amount
+                    observation['property_type'][p_id, self.property_indices[type(property)], r, c] = 1
+                    observation['property_capture'][p_id, self.property_indices[type(property)], r, c] = property.capture_amount / 20
         
         for p in self.players:
             p_id = 0 if p is player else 1
-            observation['funds'][p_id] = self.game.state.funds[p]
+            observation['funds'][p_id] = self.game.state.funds[p] / 999999
             co = self.game.state.co[p]
-            observation['power'][p_id] = co.power
+            observation['cop'][p_id] = co.cop_progress()
+            observation['scop'][p_id] = co.scop_progress()
             observation['cop_active'][p_id] = 1 if co.cop_applied else 0
             observation['scop_active'][p_id] = 1 if co.scop_applied else 0
-
+        
         return observation
     
     def calculate_reward(self, player, winner):

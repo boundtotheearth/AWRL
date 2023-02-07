@@ -1,4 +1,5 @@
 import random
+import math
 from copy import deepcopy
 from Game.Unit import standard_units
 
@@ -51,6 +52,12 @@ class BaseCO:
         if self.cop_applied or self.scop_applied:
             return
         self.power = max(0, min(self.scop_amount, self.power + amount))
+    
+    def cop_progress(self):
+        return self.power / (self.cop_amount * math.pow(1.2, self.powers_used))
+
+    def scop_progress(self):
+        return self.power / (self.scop_amount * math.pow(1.2, self.powers_used))
 
     def apply_cop(self, state):
         for unit in self.modifiers:
