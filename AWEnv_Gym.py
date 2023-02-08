@@ -72,6 +72,7 @@ class AWEnv_Gym(Env):
         self.game = env_config.get('game') or self.generate_game(self.co_cls, self.map, strict)
         self.seed(env_config.get('seed', 0))
         self.per_step_penalty = -1 / env_config.get('max_episode_steps', np.inf)
+        self.reward_type = env_config.get("reward_type", "binary")
 
         self.players = self.game.get_players_list()
 
@@ -268,7 +269,9 @@ class AWEnv_Gym(Env):
             reward -= 1
 
         new_potential = self.calculate_potential(player)
-        reward += (new_potential - self.prev_potential[player])
+        
+        if self.reward_type == "shaped":
+            reward += (new_potential - self.prev_potential[player])
 
         self.prev_potential[player] = new_potential
 

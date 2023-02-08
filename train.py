@@ -46,7 +46,7 @@ if __name__ == "__main__":
     parser.add_argument("--n-epochs", type=int, default=10)
     parser.add_argument("--ent-coef", type=float, default=0.0)
     parser.add_argument("--gamma", type=float, default=0.99)
-    parser.add_argument("--gamma-max", type=float, default=0.999)
+    parser.add_argument("--gamma-max", type=float, default=1)
     parser.add_argument("--gamma-decay-rate", type=float, default=0)
 
     args = parser.parse_args()
@@ -150,7 +150,6 @@ if __name__ == "__main__":
         #Adjust gamma
         model.gamma = 1 - gamma_schedule(progress_remaining)
         model.rollout_buffer.gamma = 1 - gamma_schedule(progress_remaining)
-        print(model.gamma)
         
         model.learn(total_timesteps=args.n_steps * args.n_envs, reset_num_timesteps=False, progress_bar=True)
 
