@@ -21,7 +21,7 @@ env_config = {
     "seed": None,
     "agent_player": "O",
     'co_cls': {'O': COAdder, 'B': COAdder},
-    "opponent_list": [AIAgent(MaskablePPO.load("model_7", n_steps=0), deterministic=True)],
+    "opponent_list": [AIAgent(MaskablePPO.load("model_8", n_steps=0), deterministic=True)],
     # "opponent_list": [RandomAgent()],
     "strict": False,
     "reward_type": "shaped"
@@ -32,7 +32,7 @@ observation = env.reset()
 
 env.render(mode='text')
 
-model = MaskablePPO.load("model_8", n_steps=0)
+model = MaskablePPO.load("model_9", n_steps=0)
 # test_agent = RandomAgent()
 test_agent = AIAgent(model, deterministic=True)
 

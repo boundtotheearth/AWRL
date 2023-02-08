@@ -279,17 +279,22 @@ class AWEnv_Gym(Env):
         
     def calculate_potential(self, player):
         player_stats = self.game.state.get_player_stats()
-        player_potential = 0
-        other_potential = 0
+        player_army_potential = 0
+        other_army_potential = 0
+        player_income_potential = 0
+        other_income_potential = 0
         for other_player, stats in player_stats.items():
             if other_player == player:
-                player_potential += stats['army_value']
-                player_potential +=  5 * stats['income']
+                player_army_potential += stats['army_value']
+                player_income_potential +=  stats['income']
             else:
-                other_potential += stats['army_value']
-                other_potential += 5 * stats['income']
+                other_army_potential += stats['army_value']
+                other_income_potential += stats['income']
 
-        potential = player_potential / (player_potential + other_potential)
+        army_potential = player_army_potential / (player_army_potential + other_army_potential)
+        income_potential = player_income_potential / (player_income_potential + other_income_potential)
+
+        potential = (army_potential + (5 * income_potential)) / 6
         return potential
 
     def action_masks(self):
