@@ -23,7 +23,8 @@ env_config = {
     'co_cls': {'O': COAdder, 'B': COAdder},
     "opponent_list": [AIAgent(MaskablePPO.load("model_7", n_steps=0), deterministic=True)],
     # "opponent_list": [RandomAgent()],
-    "strict": False
+    "strict": False,
+    "reward_type": "shaped"
 }
 
 env = make_vec_env(AWEnv_Gym.selfplay_env, n_envs=1, env_kwargs={'env_config': env_config})

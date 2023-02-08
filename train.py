@@ -35,6 +35,7 @@ if __name__ == "__main__":
     parser.add_argument("--save-path", type=str, default="ppo_simple")
     parser.add_argument("--eval-freq", type=int, default=1)
     parser.add_argument("--reward-threshold", type=float, default=0.9)
+    parser.add_argument("--reward-type", type=str, default="binary")
     parser.add_argument("--n-envs", type=int, default=20)
     parser.add_argument("--n-eval-envs", type=int, default=20)
     parser.add_argument("--max-steps", type=int, default=4000)
@@ -69,8 +70,8 @@ if __name__ == "__main__":
         "seed": None,
         'agent_player': 'random',
         'co_cls': {'O': COAdder, 'B': COAdder},
-        'opponent_list': current_opponents
-        # 'opponent_list': [agent]
+        'opponent_list': current_opponents,
+        'reward_type': args.reward_type
     }
     env = make_vec_env(
         env_id=AWEnv_Gym.selfplay_env,
@@ -85,6 +86,7 @@ if __name__ == "__main__":
         "render_mode": None,
         "seed": None,
         'co_cls': {'O': COAdder, 'B': COAdder},
+        'reward_type': args.reward_type
     }
     # eval_env = make_vec_env(AWEnv_Gym.selfplay_env, n_envs=args.n_eval_envs, env_kwargs={'env_config': eval_env_config})
     selfplay_eval_callback = SelfplayCallback(

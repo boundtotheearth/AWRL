@@ -10,6 +10,7 @@ conda run --live-stream -n AWRL_env python train.py \
 --max-steps=500 \
 --max-eval-steps=2000 \
 --reward-threshold=1.0 \
+--reward-type="shaped" \
 --ent-coef=1e-3 \
 --lr=0.0003 \
 --lr-decay-rate=5 \
