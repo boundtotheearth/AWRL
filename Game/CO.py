@@ -42,7 +42,7 @@ class BaseCO:
     def get_attack_modifier(self, unit_type):
         return self.modifiers.get(unit_type, (0, 0))[0]
     
-    def get_defence_modifier(self, unit_type):
+    def get_defense_modifier(self, unit_type):
         return self.modifiers.get(unit_type, (0, 0))[1]
 
     def get_luck_roll(self):

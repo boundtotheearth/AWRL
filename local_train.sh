@@ -1,6 +1,5 @@
 conda run --live-stream -n AWRL_env python train.py \
 --map-name="Maps/simple_build_capture.json" \
---from-checkpoint="ppo_simple/current_model" \
 --load-opponents="opponents" \
 --n-iters=500 \
 --n-steps=64 \
@@ -8,12 +7,13 @@ conda run --live-stream -n AWRL_env python train.py \
 --eval-freq=1 \
 --n-envs=20 \
 --n-eval-envs=10 \
---max-steps=200 \
+--max-steps=500 \
 --max-eval-steps=2000 \
 --reward-threshold=1.0 \
 --ent-coef=1e-3 \
 --lr=0.0003 \
 --lr-decay-rate=5 \
---gamma=0.999 \
+--gamma=0.99 \
+--gamma-decay-rate=1 \
 --clip-range=0.2 \
 --clip-range-decay-rate=1

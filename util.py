@@ -32,8 +32,8 @@ def calculate_damage(attacking_co, attacking_unit, defending_co, defending_unit,
     co_attack = attacking_co.get_attack_modifier(type(attacking_unit))
     luck = attacking_co.get_luck_roll()
     attacker_visual_health = attacking_unit.get_display_health()
-    co_defense = defending_co.get_defence_modifier(type(defending_unit))
-    terrain_stars = terrain.defence
+    co_defense = defending_co.get_defense_modifier(type(defending_unit))
+    terrain_stars = terrain.defense
     defender_visual_health = defending_unit.get_display_health()
     ct_attack = CT * 10
 
@@ -62,10 +62,10 @@ def linear_schedule(initial_value: float):
         return progress_remaining * initial_value
     return func
 
-def exponential_schedule(initial_value: float, rate: float):
+def exponential_schedule(initial_value: float, rate: float, min_value: float = 1e-9):
     def func(progress_remaining: float) -> float:
         if progress_remaining <= 0:
-            return 1e-9
+            return min_value
         
         return initial_value * 10 ** (rate * math.log(progress_remaining))
 

@@ -221,7 +221,7 @@ class AWEnv_Gym(Env):
         get_property = self.game.state.get_property
         get_unit = self.game.state.get_unit
 
-        observation['day'][0] = self.game.state.current_day / 100
+        observation['day'][0] = (self.game.state.current_day // 10) / 10
 
         for r in range(height):
             for c in range(width):
@@ -229,7 +229,7 @@ class AWEnv_Gym(Env):
                 terrain = get_terrain(position)
                 if not isinstance(terrain, Property):
                     observation['terrain_type'][self.terrain_indices[type(terrain)], r, c] = 1
-                    observation['terrain_stars'][r, c] = terrain.defence / 5
+                    observation['terrain_stars'][r, c] = terrain.defense / 5
 
                 for p in self.players:
                     p_id = 0 if p is player else 1
@@ -237,8 +237,8 @@ class AWEnv_Gym(Env):
                     if unit is not None:
                         observation['unit_type'][p_id, self.unit_indices[type(unit)], r, c] = 1
                         observation['unit_health'][p_id, r, c] = unit.get_display_health() / 10
-                        observation['unit_fuel'][p_id, r, c] = unit.fuel / 99
-                        observation['unit_ammo'][p_id, r, c] = unit.ammo / 99
+                        observation['unit_fuel'][p_id, r, c] = unit.fuel / unit.max_fuel
+                        observation['unit_ammo'][p_id, r, c] = unit.ammo / unit.max_ammo if unit.max_ammo > 0 else 1
                         observation['unit_available'][p_id, r, c] = 1 if unit.available else 0
                         for unit_type in standard_units:
                             observation['unit_attack'][p_id, self.unit_indices[unit_type], r, c] = unit.attack_table.get(unit_type, (0, 0))[0] / 200
@@ -257,7 +257,7 @@ class AWEnv_Gym(Env):
             observation['scop'][p_id] = co.scop_progress()
             observation['cop_active'][p_id] = 1 if co.cop_applied else 0
             observation['scop_active'][p_id] = 1 if co.scop_applied else 0
-        
+
         return observation
     
     def calculate_reward(self, player, winner):

@@ -46,6 +46,8 @@ if __name__ == "__main__":
     parser.add_argument("--n-epochs", type=int, default=10)
     parser.add_argument("--ent-coef", type=float, default=0.0)
     parser.add_argument("--gamma", type=float, default=0.99)
+    parser.add_argument("--gamma-max", type=float, default=0.999)
+    parser.add_argument("--gamma-decay-rate", type=float, default=0)
 
     args = parser.parse_args()
 
@@ -132,6 +134,7 @@ if __name__ == "__main__":
     print("Training started at", datetime.now().strftime("%H:%M:%S"))
     lr_schedule = exponential_schedule(args.lr, args.lr_decay_rate)
     clip_range_schedule = exponential_schedule(args.clip_range, args.clip_range_decay_rate)
+    gamma_schedule = exponential_schedule(1 - args.gamma, args.gamma_decay_rate, 1 - args.gamma_max)
     for iter in range(1, args.n_iters + 1):
         print(f"Iteration {iter} started at", datetime.now().strftime("%H:%M:%S"))
         
@@ -143,6 +146,10 @@ if __name__ == "__main__":
 
         #Adjust clip range
         model.clip_range = get_schedule_fn(clip_range_schedule(progress_remaining))
+
+        #Adjust gamma
+        model.gamma = 1 - gamma_schedule(progress_remaining)
+        model.rollout_buffer.gamma = 1 - gamma_schedule(progress_remaining)
         
         model.learn(total_timesteps=args.n_steps * args.n_envs, reset_num_timesteps=False, progress_bar=True)
 

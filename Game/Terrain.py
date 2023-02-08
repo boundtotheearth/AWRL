@@ -4,7 +4,7 @@ import math
 
 class Terrain(object):
     code = "   "
-    defence = 1
+    defense = 1
     costs = {}
 
     def get_move_cost(self, move_type):
