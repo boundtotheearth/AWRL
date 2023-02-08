@@ -64,7 +64,7 @@ class ActionEnd(Action):
         for row in self.state.terrain:
             for terrain in row:
                 if isinstance(terrain, Property) and terrain.owner == player:
-                    self.state.funds[terrain.owner] += 1000
+                    self.state.funds[terrain.owner] += terrain.income
 
     def daily_unit_reset(self, player):
         for unit in self.state.get_all_units(player).values():

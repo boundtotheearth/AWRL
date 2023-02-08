@@ -1,0 +1,37 @@
+{
+  "terrain": [
+    ["MTN", "MTN", "NCM", "MTN", "MTN", "NCT", "PLN", "MTN", "MTN", "PLN", "PLN", "WOD", "NCT", "PLN", "PLN", "MTN", "MTN", "PLN", "NCT", "PLN", "WOD", "WOD", "WOD"],
+    ["MTN", "MTN", "WOD", "WOD", "PLN", "NCT", "ROD", "ROD", "ROD", "NCT", "PLN", "PLN", "PLN", "PLN", "PLN", "NCT", "PLN", "PLN", "PLN", "PLN", "PLN", "BBS", "WOD"],
+    ["WOD", "WOD", "MTN", "BBS", "ROD", "ROD", "ROD", "PLN", "ROD", "ROD", "ROD", "MTN", "MTN", "PLN", "PLN", "WOD", "PLN", "SHL", "SHL", "PLN", "WOD", "PLN", "MTN"],
+    ["MTN", "MTN", "WOD", "PLN", "ROD", "PLN", "BLB", "WOD", "MTN", "MTN", "ROD", "NCT", "PLN", "PLN", "WOD", "PLN", "SHL", "SEA", "SEA", "PLN", "NCT", "PLN", "MTN"],
+    ["MTN", "MTN", "PLN", "ROD", "ROD", "WOD", "MTN", "MTN", "PLN", "ROD", "ROD", "PLN", "WOD", "PLN", "PLN", "PLN", "SHL", "SEA", "SEA", "ROD", "RVR", "PLN", "NCT"],
+    ["MTN", "WOD", "NCT", "ROD", "PLN", "MTN", "NCT", "PLN", "NCT", "ROD", "PLN", "PLN", "PLN", "PLN", "PLN", "PLN", "PLN", "SHL", "SHL", "WOD", "ROD", "ROD", "WOD"],
+    ["NAP", "PLN", "ROD", "ROD", "WOD", "WOD", "PLN", "WOD", "PLN", "PLN", "PLN", "PLN", "OBS", "SHL", "SEA", "OLB", "PLN", "NCT", "PLN", "WOD", "RVR", "ROD", "ROD"],
+    ["WOD", "PLN", "ROD", "PLN", "MTN", "PLN", "PLN", "PLN", "PLN", "PLN", "OBS", "MTN", "RVR", "SEA", "SEA", "PLN", "PLN", "PLN", "PLN", "PLN", "ROD", "NCT", "ROD"],
+    ["PLN", "NCT", "ROD", "ROD", "PLN", "WOD", "PLN", "SHL", "SEA", "ROD", "RVR", "RVR", "ROD", "NCT", "ROD", "ROD", "ROD", "PLN", "WOD", "PLN", "RVR", "RVR", "ROD"],
+    ["PLN", "PLN", "PLN", "ROD", "ROD", "ROD", "PLN", "SEA", "SEA", "MTN", "WOD", "RVR", "RVR", "WOD", "SHL", "SHL", "NCT", "ROD", "PLN", "NCT", "PLN", "RVR", "ROD"],
+    ["ROD", "RVR", "PLN", "NCT", "PLN", "ROD", "NCT", "SHL", "SHL", "WOD", "RVR", "RVR", "WOD", "MTN", "SEA", "SEA", "PLN", "ROD", "ROD", "ROD", "PLN", "PLN", "PLN"],
+    ["ROD", "RVR", "RVR", "PLN", "WOD", "PLN", "ROD", "ROD", "ROD", "NCT", "ROD", "RVR", "RVR", "ROD", "SEA", "SHL", "PLN", "WOD", "PLN", "ROD", "ROD", "NCT", "PLN"],
+    ["ROD", "NCT", "ROD", "PLN", "PLN", "PLN", "PLN", "PLN", "SEA", "SEA", "RVR", "MTN", "BBS", "PLN", "PLN", "PLN", "PLN", "PLN", "MTN", "PLN", "ROD", "PLN", "WOD"],
+    ["ROD", "ROD", "RVR", "WOD", "PLN", "NCT", "PLN", "BLB", "SEA", "SHL", "BBS", "PLN", "PLN", "PLN", "PLN", "WOD", "PLN", "WOD", "WOD", "ROD", "ROD", "PLN", "NAP"],
+    ["WOD", "ROD", "ROD", "WOD", "SHL", "SHL", "PLN", "PLN", "PLN", "PLN", "PLN", "PLN", "PLN", "ROD", "NCT", "PLN", "NCT", "MTN", "PLN", "ROD", "NCT", "WOD", "MTN"],
+    ["NCT", "PLN", "RVR", "ROD", "SEA", "SEA", "SHL", "PLN", "PLN", "PLN", "WOD", "PLN", "ROD", "ROD", "PLN", "MTN", "MTN", "WOD", "ROD", "ROD", "PLN", "MTN", "MTN"],
+    ["MTN", "PLN", "NCT", "PLN", "SEA", "SEA", "SHL", "PLN", "WOD", "PLN", "PLN", "NCT", "ROD", "MTN", "MTN", "WOD", "OLB", "PLN", "ROD", "PLN", "WOD", "MTN", "MTN"],
+    ["MTN", "PLN", "WOD", "PLN", "SHL", "SHL", "PLN", "WOD", "PLN", "PLN", "MTN", "MTN", "ROD", "ROD", "ROD", "PLN", "ROD", "ROD", "ROD", "OBS", "MTN", "WOD", "WOD"],
+    ["WOD", "OBS", "PLN", "PLN", "PLN", "PLN", "PLN", "NCT", "PLN", "PLN", "PLN", "PLN", "PLN", "NCT", "ROD", "ROD", "ROD", "NCT", "PLN", "WOD", "WOD", "MTN", "MTN"],
+    ["WOD", "WOD", "WOD", "PLN", "NCT", "PLN", "MTN", "MTN", "PLN", "PLN", "NCT", "WOD", "PLN", "PLN", "MTN", "MTN", "PLN", "NCT", "MTN", "MTN", "NCM", "MTN", "MTN"]
+  ],
+  "units": {
+    "O": [
+      {"row": 8, "col": 10, "code": "INF"},
+      {"row": 18, "col": 1, "code": "INF"}
+    ],
+    "B": [
+      {"row": 1, "col": 21, "code": "INF"},
+      {"row": 2, "col": 3, "code": "INF"},
+      {"row": 12, "col": 12, "code": "INF"},
+      {"row": 13, "col": 10, "code": "INF"}
+    ]
+  }
+}
+

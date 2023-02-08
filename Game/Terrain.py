@@ -14,6 +14,7 @@ class Terrain(object):
         return self.code
 
 class Property(Terrain):
+    income=1000
     costs={
         MoveType.FOOT:1,
         MoveType.BOOT:1,
@@ -251,6 +252,7 @@ class TerrainPort(Property):
     }
 class TerrainLab(Property):
     code=".LB"
+    income=0
 class TerrainCommTower(Property):
     code=".CM"
 

@@ -13,7 +13,6 @@ conda run --live-stream -n AWRL_env python train.py \
 --ent-coef=1e-3 \
 --lr=0.0003 \
 --lr-decay-rate=5 \
---gamma=0.99 \
---gamma-decay-rate=1 \
+--gamma=0.999 \
 --clip-range=0.2 \
 --clip-range-decay-rate=1

@@ -1,4 +1,4 @@
-from Game.Terrain import Property, TerrainHeadquarters
+from Game.Terrain import Property, TerrainHeadquarters, TerrainLab
 from Game.Unit import UnitLibrary, standard_units
 from Game.MoveType import MoveType
 import math
@@ -34,6 +34,7 @@ class State:
 
         self.unit_built = {player: len(self.get_all_units(owner=player)) > 0 for player in self.players}
         self.has_hq = {player: any([isinstance(property, TerrainHeadquarters) for property in self.get_all_properties(owner=player).values()]) for player in self.players}
+        self.has_lab = {player: any([isinstance(property, TerrainLab) for property in self.get_all_properties(owner=player).values()]) for player in self.players}
 
         self._movement_costs = {}
 
@@ -127,6 +128,9 @@ class State:
         remaining_players = set(self.players)
         for player in self.players:
             if self.has_hq[player] and not any([isinstance(property, TerrainHeadquarters) for property in self.get_all_properties(owner=player).values()]):
+                remaining_players.discard(player)
+                continue
+            if self.has_lab[player] and not any([isinstance(property, TerrainLab) for property in self.get_all_properties(owner=player).values()]):
                 remaining_players.discard(player)
                 continue
             if self.unit_built[player] and len(self.get_all_units(owner=player)) == 0:

@@ -150,6 +150,7 @@ if __name__ == "__main__":
         #Adjust gamma
         model.gamma = 1 - gamma_schedule(progress_remaining)
         model.rollout_buffer.gamma = 1 - gamma_schedule(progress_remaining)
+        print(model.gamma)
         
         model.learn(total_timesteps=args.n_steps * args.n_envs, reset_num_timesteps=False, progress_bar=True)
 
