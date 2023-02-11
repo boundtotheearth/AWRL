@@ -26,7 +26,8 @@ python train.py \
 --n-eval-envs=10 \
 --eval-freq=1 \
 --reward-threshold=1.0 \
+--reward-shape="shaped" \
 --ent-coef=1e-3 \
 --gamma=0.999 \
---clip-range=0.2 \
+--clip-range=0.4 \
 --clip-range-decay-rate=1

@@ -294,7 +294,7 @@ class AWEnv_Gym(Env):
         army_potential = player_army_potential / (player_army_potential + other_army_potential)
         income_potential = player_income_potential / (player_income_potential + other_income_potential)
 
-        potential = (army_potential + (5 * income_potential)) / 6
+        potential = (army_potential + (2 * income_potential)) / 3
         return potential
 
     def action_masks(self):
