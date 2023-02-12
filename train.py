@@ -57,7 +57,7 @@ if __name__ == "__main__":
     current_opponents = [RandomAgent()]
     if args.load_opponents:
         print("Loading opponents...")
-        opponent_models = sorted([os.path.join(args.load_opponents, f).replace(".zip", "") for f in os.listdir(args.load_opponents) if os.path.isfile(os.path.join(args.load_opponents, f)) and ".zip" in f])
+        opponent_models = sorted([os.path.join(args.load_opponents, f).replace(".zip", "") for f in os.listdir(args.load_opponents) if os.path.isfile(os.path.join(args.load_opponents, f)) and ".zip" in f], key=lambda x: int(x.split("_")[1]))
         opponents = [AIAgent(MaskablePPO.load(model, n_steps=0), name=model) for model in opponent_models]
         current_opponents.extend(opponents)
         print(f"Loaded {len(opponents)} opponents: {opponent_models}")
